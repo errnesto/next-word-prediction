@@ -1,17 +1,6 @@
 from kivy.app import App
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.button import Button
-from kivy.properties import ObjectProperty
 
-
-class Root(FloatLayout):
-  content  = ObjectProperty(None)
-
-  def load_content(self):
-    content = self.content
-    for but in range(20):
-      button = Button(text=str(but))
-      content.add_widget(button)
+from viewComponents.Root import *
 
 class MainApp(App):
 
