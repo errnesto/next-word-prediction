@@ -1,12 +1,8 @@
-<Root>:
-  content: sb.content
+<Root>: #BoxLayout
+  orientation:       'vertical'
+  text_output:       text_output
 
-  BoxLayout:
-    id:          sb
-    content:     content
-    orientation: 'vertical'
-    size_hint:   1, 0.8
-
-    GridLayout:
-      id:   content
-      cols: 5
+  Label:
+    id:        text_output
+    size_hint: 1, 0.15
+    font_size: 20
