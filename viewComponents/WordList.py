@@ -30,6 +30,7 @@ class WordList(StackLayout):
 
     #highlight first element
     self.children[-1].highlight() #kivy orders children in reverse order
+    self.highlighted = 0
 
   def move_highlight(self, direction):
     if direction == 'right':
@@ -53,7 +54,3 @@ class WordList(StackLayout):
       if (i == self.highlighted):
         self.dispatch('on_button_selected', button.text)
         break
-
-    self.highlighted = 0
-
-
