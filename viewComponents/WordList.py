@@ -4,10 +4,11 @@ from kivy.lang import Builder
 
 from models.WordPredictor import WordPredictor
 from viewComponents.PredictedWordButton import PredictedWordButton
+from viewComponents.BackButton import BackButton
 Builder.load_file('viewComponents/WordList.kv')
 
 class WordList(StackLayout):
-  highlighted = 0
+  highlighted = 1
 
   def __init__(self, **kwargs):
     super(WordList, self).__init__(**kwargs)
@@ -23,14 +24,18 @@ class WordList(StackLayout):
   def build_list(self, words):
     self.clear_widgets()
 
+    back_button = BackButton()
+    # button.bind(on_press = self.button_pressed)
+    self.add_widget(back_button)
+
     for word in words:
       button = PredictedWordButton(text = word)
       button.bind(on_press = self.button_pressed)
       self.add_widget(button)
 
     #highlight first element
-    self.children[-1].highlight() #kivy orders children in reverse order
-    self.highlighted = 0
+    self.children[-2].highlight() #kivy orders children in reverse order
+    self.highlighted = 1
 
   def move_highlight(self, direction):
     if direction == 'right':
@@ -39,7 +44,7 @@ class WordList(StackLayout):
       self.highlighted -= 1
 
     if self.highlighted >= len(self.children):
-      self.highlighted = 0
+      self.highlighted = 1
     elif self.highlighted < 0:
       self.highlighted = len(self.children) -1
 

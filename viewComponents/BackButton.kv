@@ -1,0 +1,15 @@
+<BackButton>: #FloatLayout
+  id:     back_button
+  button: button
+
+  size_hint:        (0.2, None)
+  height:           100
+
+  Button:
+    id:               button
+    background_color: back_button.red
+    size_hint:        (1, None)
+    height:           80
+    pos_hint:         {'y': 0.1}
+    pos:              (-2, 0)
+    text:             'BACK'
