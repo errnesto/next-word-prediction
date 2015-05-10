@@ -8,7 +8,8 @@ from viewComponents.BackButton import BackButton
 Builder.load_file('viewComponents/WordList.kv')
 
 class WordList(StackLayout):
-  highlighted = 1
+  FIRST_WORD_POS = 2
+  highlighted    = FIRST_WORD_POS
 
   def __init__(self, **kwargs):
     super(WordList, self).__init__(**kwargs)
@@ -24,9 +25,11 @@ class WordList(StackLayout):
   def build_list(self, words):
     self.clear_widgets()
 
-    back_button = BackButton()
+    back_button   = BackButton('BACK')
+    delete_button = BackButton('DEL')
     # button.bind(on_press = self.button_pressed)
     self.add_widget(back_button)
+    self.add_widget(delete_button)
 
     for word in words:
       button = PredictedWordButton(text = word)
@@ -34,8 +37,8 @@ class WordList(StackLayout):
       self.add_widget(button)
 
     #highlight first element
-    self.children[-2].highlight() #kivy orders children in reverse order
-    self.highlighted = 1
+    self.children[-self.FIRST_WORD_POS-1].highlight() #kivy orders children in reverse order
+    self.highlighted = self.FIRST_WORD_POS
 
   def move_highlight(self, direction):
     if direction == 'right':
@@ -44,7 +47,7 @@ class WordList(StackLayout):
       self.highlighted -= 1
 
     if self.highlighted >= len(self.children):
-      self.highlighted = 1
+      self.highlighted = self.FIRST_WORD_POS
     elif self.highlighted < 0:
       self.highlighted = len(self.children) -1
 

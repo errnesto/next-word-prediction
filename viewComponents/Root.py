@@ -12,7 +12,7 @@ class Root(BoxLayout):
   text_output       = ObjectProperty(None)
 
   def __init__(self, **kwargs):
-    super(BoxLayout, self).__init__(**kwargs)
+    super(Root, self).__init__(**kwargs)
 
     #build initial list
     self.word_predictor = WordPredictor()
