@@ -1,4 +1,3 @@
-from kivy.core.window   import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties    import ObjectProperty
 from kivy.lang          import Builder
@@ -24,17 +23,7 @@ class Root(BoxLayout):
 
     #listen to word list
     self.word_list_wrapper.bind(on_button_selected = self.word_selected)
-
-    #add key listeners
-    self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-    self._keyboard.bind(on_key_down = self._keyboard_dispatcher)
-
-  def _keyboard_closed(self):
-    self._keyboard.unbind(on_key_down = self._on_keyboard_down)
-    self._keyboard = None
-
-  def _keyboard_dispatcher(self, keyboard, keycode, text, modifiers):
-    self.signal_handler(keycode[1]) #we use the kivy keycodes as signal names
+  
 
   # this should easily be pluggable with any kind of input device
   # one should be able to expose the whole functionality of the app with the 3 signals "left" "right" and "enter"
