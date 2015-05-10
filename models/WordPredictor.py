@@ -5,7 +5,7 @@ class WordPredictor():
 
   def getWordList(self):
     word_list       = []
-    number_of_words = random.randint(5, 30)
+    number_of_words = random.randint(5, 60)
 
     for i in range(number_of_words):
       word_length = random.randint(4, 15)

@@ -1,3 +1,9 @@
-<WordList>: #StackLayout
-  size_hint: 1, 1
-  padding:   (10, 0)
+<WordList>: #Scroll View
+  buttons:   buttons
+  size_hint: (1, 1)
+
+  StackLayout:
+    id:        buttons
+    size_hint: (1, None)
+    padding:   (10, 0)
+    height:    len(self.children) / 5 * 100

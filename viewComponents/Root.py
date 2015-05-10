@@ -1,9 +1,9 @@
-from kivy.core.window import Window
+from kivy.core.window   import Window
 from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import ObjectProperty
-from kivy.lang import Builder
+from kivy.properties    import ObjectProperty
+from kivy.lang          import Builder
 
-from models.WordPredictor import WordPredictor
+from models.WordPredictor    import WordPredictor
 from viewComponents.WordList import WordList
 Builder.load_file('viewComponents/Root.kv')
 
