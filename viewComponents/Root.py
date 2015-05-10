@@ -22,7 +22,8 @@ class Root(BoxLayout):
     self.add_widget(self.word_list_wrapper)
 
     #listen to word list
-    self.word_list_wrapper.bind(on_button_selected = self.word_selected)
+    self.word_list_wrapper.bind(on_word_button_selected   = self.word_selected)
+    self.word_list_wrapper.bind(on_delete_button_selected = self.word_deleted)
   
 
   # this should easily be pluggable with any kind of input device
@@ -41,3 +42,9 @@ class Root(BoxLayout):
     #generate next word list
     words = self.word_predictor.getWordList()
     self.word_list_wrapper.build_list(words)
+
+
+  def word_deleted(self, word_list_wrapper):
+    words = self.text_output.text.split(' ')
+    words.pop()
+    self.text_output.text = ' '.join(words)

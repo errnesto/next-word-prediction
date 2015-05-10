@@ -12,6 +12,15 @@ class BackButton(RelativeLayout):
   def __init__(self, text, **kwargs):
     super(BackButton, self).__init__(**kwargs)
     self.button.text = text
+
+    self.register_event_type('on_press')
+    self.button.bind(on_press = self.dispatch_on_press)
+
+  def on_press(self, *args):
+    pass
+
+  def dispatch_on_press(self, *args):
+    self.dispatch('on_press')
   
   def highlight(self):
     self.button.background_color = (1, 0.2, 0.2, 0.6)

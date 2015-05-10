@@ -15,33 +15,48 @@ class WordList(ScrollView):
 
   def __init__(self, **kwargs):
     super(WordList, self).__init__(**kwargs)
-    self.register_event_type('on_button_selected')
-    print(self.height)
+    self.register_event_type('on_word_button_selected')
+    self.register_event_type('on_delete_button_selected')
+    self.register_event_type('on_back_button_selected')
 
-  #default event handler
-  def on_button_selected(self, *args):
+  #default event handlers
+  def on_word_button_selected(self, *args):
+    pass
+  def on_delete_button_selected(self, *args):
+    pass
+  def on_back_button_selected(self, *args):
     pass
 
-  def button_pressed(self, button):
-    self.dispatch('on_button_selected', button.text)
+  def word_button_pressed(self, word_button):
+    self.dispatch('on_word_button_selected', word_button.text)
+  def delete_button_pressed(self, delete_button):
+    self.dispatch('on_delete_button_selected')
+  def back_button_pressed(self, back_button):
+    print(back_button)
+    self.dispatch('on_back_button_selected')
+
 
   def build_list(self, words):
     self.buttons.clear_widgets()
 
     back_button   = BackButton('BACK')
     delete_button = BackButton('DEL')
-    # button.bind(on_press = self.button_pressed)
+    
+    back_button.bind(on_press   = self.back_button_pressed)
+    delete_button.bind(on_press = self.delete_button_pressed)
     self.buttons.add_widget(back_button)
     self.buttons.add_widget(delete_button)
 
     for word in words:
-      button = PredictedWordButton(text = word)
-      button.bind(on_press = self.button_pressed)
+      button               = PredictedWordButton(text = word)
+      button.bind(on_press = self.word_button_pressed)
       self.buttons.add_widget(button)
 
     #highlight first element
-    self.buttons.children[-self.FIRST_WORD_POS-1].highlight() #kivy orders children in reverse order
+    first_button = self.buttons.children[-self.FIRST_WORD_POS -1] #kivy orders children in reverse order
+    first_button.highlight() 
     self.highlighted = self.FIRST_WORD_POS
+    self.scroll_y    = 1
 
   def move_highlight(self, direction):
     if direction == 'right':
@@ -64,5 +79,5 @@ class WordList(ScrollView):
   def select_current(self):
     for i, button in enumerate(reversed(self.buttons.children)):
       if (i == self.highlighted):
-        self.dispatch('on_button_selected', button.text)
+        button.dispatch('on_press')
         break
