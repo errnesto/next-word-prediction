@@ -1,9 +1,9 @@
 from kivy.uix.button import Button
 from kivy.lang import Builder
 
-Builder.load_file('viewComponents/PredictedWordButton.kv')
+Builder.load_file('viewComponents/StandardButton.kv')
 
-class PredictedWordButton(Button):
+class StandardButton(Button):
   
   def highlight(self):
     self.background_color = (1, 1, 1, 0.5)

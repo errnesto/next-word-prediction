@@ -1,17 +1,9 @@
-from kivy.core.window    import Window
-from kivy.uix.scrollview import ScrollView
-from kivy.properties     import ObjectProperty
-from kivy.lang           import Builder
+from viewComponents.List           import List
+from viewComponents.StandardButton import StandardButton
+from viewComponents.BackButton     import BackButton
 
-from models.WordPredictor               import WordPredictor
-from viewComponents.PredictedWordButton import PredictedWordButton
-from viewComponents.BackButton          import BackButton
-Builder.load_file('viewComponents/WordList.kv')
-
-class WordList(ScrollView):
+class WordList(List):
   FIRST_WORD_POS = 2
-  highlighted    = FIRST_WORD_POS
-  buttons        = ObjectProperty(None)
 
   def __init__(self, **kwargs):
     super(WordList, self).__init__(**kwargs)
@@ -48,7 +40,7 @@ class WordList(ScrollView):
     self.buttons.add_widget(delete_button)
 
     for word in words:
-      button               = PredictedWordButton(text = word)
+      button               = StandardButton(text = word)
       button.bind(on_press = self.word_button_pressed)
       self.buttons.add_widget(button)
 
@@ -57,27 +49,3 @@ class WordList(ScrollView):
     first_button.highlight() 
     self.highlighted = self.FIRST_WORD_POS
     self.scroll_y    = 1
-
-  def move_highlight(self, direction):
-    if direction == 'right':
-      self.highlighted += 1
-    else:
-      self.highlighted -= 1
-
-    if self.highlighted >= len(self.buttons.children):
-      self.highlighted = self.FIRST_WORD_POS
-    elif self.highlighted < 0:
-      self.highlighted = len(self.buttons.children) -1
-
-    for i, button in enumerate(reversed(self.buttons.children)):
-      if (i == self.highlighted):
-        button.highlight()
-        self.scroll_to(button)
-      else:
-        button.unhighlight()
-
-  def select_current(self):
-    for i, button in enumerate(reversed(self.buttons.children)):
-      if (i == self.highlighted):
-        button.dispatch('on_press')
-        break
