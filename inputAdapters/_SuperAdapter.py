@@ -3,6 +3,22 @@
 from kivy.event import EventDispatcher
 
 class SuperAdapter(EventDispatcher):
+  '''Map events from the input device to the apps own signals
+
+    This class must be able to dispatch all the required signals
+    when the according event is triggert on the input device.
+
+    Signals are dispatched like this:
+      self.dispatch('on_signal', 'signal_name')
+
+    Required Signals are:
+      'left'
+      'right'
+      'enter'
+
+    Optional Signals are:
+      'close'
+    '''
 
   def __init__(self, **kwargs):
     '''Register 'on_signal' event'''
@@ -12,22 +28,6 @@ class SuperAdapter(EventDispatcher):
   @staticmethod
   def is_available():
     '''Return Boolean weather the inputDevice is available'''
-    raise NotImplementedError("Please Implement this method")
-
-  def signal_dispatcher(self, *args):
-    '''Map events from the input device to the apps own signals
-
-    This should dispatch all the required signals in the form:
-    self.dispatch('on_signal', 'signal_name')
-
-    Required Signals are:
-    'left'
-    'right'
-    'enter'
-
-    Optional Signals are:
-    'close'
-    '''
     raise NotImplementedError("Please Implement this method")
 
   def on_signal(self, *args):

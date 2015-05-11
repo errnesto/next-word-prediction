@@ -16,10 +16,10 @@ class MainApp(App):
     return self.root
 
   def signal_handler(self, signal_adapter, signal):
+    # either handle signal here or pass it down to root object
     if signal == 'close':
       self.stop()
     else:
-      # pass signal down to root object
       self.root.signal_handler(signal)
 
 if __name__ == '__main__':
