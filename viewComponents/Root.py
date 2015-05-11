@@ -2,8 +2,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.properties    import ObjectProperty
 from kivy.lang          import Builder
 
-import inputAdapters # see __init__.py how this is initialized 
-
 from models.WordPredictor          import WordPredictor
 from viewComponents.WordList       import WordList
 from viewComponents.CathegoryList  import CathegoryList
@@ -17,17 +15,11 @@ class Root(BoxLayout):
   def __init__(self, **kwargs):
     super(Root, self).__init__(**kwargs)
 
-    # listen to all avalable input devices
-    for inputAdapter in inputAdapters.adapters:
-      if inputAdapter.is_available():
-        input_adapter = inputAdapter()
-        input_adapter.bind(on_signal = self.signal_handler)
-
     self.show_cathegory_list()
 
   # this should easily be pluggable with any kind of input device
   # one should be able to expose the whole functionality of the app with the 3 signals "left" "right" and "enter"
-  def signal_handler(self, signal_adapter, signal):
+  def signal_handler(self, signal):
     if signal == 'left':
       self.current_list.move_highlight('left')
     elif signal == 'right':

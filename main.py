@@ -1,10 +1,26 @@
 from kivy.app            import App
 from viewComponents.Root import Root
 
+import inputAdapters # see __init__.py how this is initialized 
+
 class MainApp(App):
 
   def build(self):
-    return Root()
+    # listen to all avalable input devices
+    for inputAdapter in inputAdapters.adapters:
+      if inputAdapter.is_available():
+        input_adapter = inputAdapter()
+        input_adapter.bind(on_signal = self.signal_handler)
+
+    self.root = Root()
+    return self.root
+
+  def signal_handler(self, signal_adapter, signal):
+    if signal == 'close':
+      self.stop()
+    else:
+      # pass signal down to root object
+      self.root.signal_handler(signal)
 
 if __name__ == '__main__':
   MainApp().run()
