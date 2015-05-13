@@ -13,9 +13,12 @@ class BackButton(RelativeLayout):
     self.button.text = text
 
     self.register_event_type('on_press')
-    self.button.bind(on_press = self.dispatch_on_press)
+    self.register_event_type('on_release')
+    self.button.bind(on_release = self.dispatch_on_press)
 
   def on_press(self, *args):
+    pass
+  def on_release(self, *args):
     pass
 
   def dispatch_on_press(self, *args):

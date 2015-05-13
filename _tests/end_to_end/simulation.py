@@ -118,6 +118,10 @@ class Simulator(object):
         widget = self.collected_widgets[int(node.get('__element_id'))]
         return widget
 
+    @execution_step
+    def get_node(self, selector, cb):
+        cb(self.assert_exists(selector, False))
+
     # ASSERTIONS
     def assert_exists(self, selector, to_mark=True):
         self.rebuild_tree()

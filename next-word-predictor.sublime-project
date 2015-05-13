@@ -11,6 +11,11 @@
         "name": "Run",
         "shell_cmd": "workon kivy && python main.py",
         "working_dir": "${project_path:${folder}}",
+      },
+      {
+        "name": "Test",
+        "shell_cmd": "workon kivy && sh test.sh",
+        "working_dir": "${project_path:${folder}}",
       }
     ]
 }
