@@ -5,6 +5,9 @@ import inputAdapters # see __init__.py how this is initialized
 
 class MainApp(App):
 
+  def __init__(self, **kwargs):
+    super(MainApp, self).__init__(**kwargs)
+
   def build(self):
     # listen to all avalable input devices
     for inputAdapter in inputAdapters.adapters:

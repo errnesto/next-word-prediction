@@ -2,7 +2,6 @@ from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.stacklayout    import StackLayout
 from kivy.properties         import ObjectProperty
 from kivy.lang               import Builder
-
 Builder.load_file('viewComponents/BackButton.kv')
 
 class BackButton(RelativeLayout):

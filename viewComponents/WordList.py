@@ -24,7 +24,6 @@ class WordList(List):
   def delete_button_pressed(self, delete_button):
     self.dispatch('on_delete_button_selected')
   def back_button_pressed(self, back_button):
-    print(back_button)
     self.dispatch('on_back_button_selected')
 
 

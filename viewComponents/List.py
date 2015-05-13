@@ -1,7 +1,6 @@
 from kivy.uix.scrollview import ScrollView
 from kivy.properties     import ObjectProperty
 from kivy.lang           import Builder
-
 Builder.load_file('viewComponents/List.kv')
 
 class List(ScrollView):
