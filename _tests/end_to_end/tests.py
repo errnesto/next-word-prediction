@@ -30,7 +30,7 @@ def test_back_button(simulator):
 def test_selecting_a_word(simulator):
   simulator.tap('//Root//CathegoryList//StandardButton[1]')
   button_selector = '//Root//WordList//StandardButton[1]'
-  # test are called in a queue so when we get somthing from the state we have to do this with callbacks 
+  # test are called in a queue so when we get something from the state we have to do this with callbacks 
   def cb(button):
     simulator.tap(button_selector)
     simulator.assert_text('//Root//Label', ' ' + button.text)

@@ -6,17 +6,17 @@ from kivy.animation import Animation
 from kivy.properties import StringProperty, BooleanProperty
 from kivy.clock import Clock
 
-from tools import execution_step, without_schedule_seconds
+from tools import execution_step
 
 
 class Simulator(object):
-    TO_WAIT = 1
+    TO_WAIT = 0
     PROPERTY_CLASSES_TO_ATTRIBUTES = {
         StringProperty: lambda x: x if x else str(x),
         BooleanProperty: lambda x: str(x).lower(),
     }
-    START_DELAY = 2
-    EXECUTE_STEP_DELAY = .5
+    START_DELAY = 0
+    EXECUTE_STEP_DELAY = 0
 
     def __init__(self, app):
         self.app = app
@@ -59,7 +59,6 @@ class Simulator(object):
         for node in nodes:
             widget = self.node_to_widget(node)
             widget.dispatch(event)
-            self._mark_event(widget)
 
     @execution_step
     def press(self, selector, release=False):
@@ -130,24 +129,20 @@ class Simulator(object):
         if len(nodes) > 1:
             raise RuntimeError("Multiple nodes found for selector %s" % selector)
         widget = self.node_to_widget(nodes)
-        if to_mark:
-            self._mark_assertion(widget)
+
         return widget
 
     @execution_step
     def assert_count(self, selector, count):
         self.rebuild_tree()
         nodes = self.tree.xpath(selector)
-        for node in nodes:
-            self._mark_assertion(self.node_to_widget(node))
+        
         assert len(nodes) == count, "%s selects %s nodes, not %s" % (selector, len(nodes), count)
 
     @execution_step
     def assert_count_min(self, selector, count):
         self.rebuild_tree()
         nodes = self.tree.xpath(selector)
-        for node in nodes:
-            self._mark_assertion(self.node_to_widget(node))
         assert len(nodes) >= count, "%s selects %s nodes, not %s" % (selector, len(nodes), count)
 
     @execution_step
@@ -181,34 +176,3 @@ class Simulator(object):
     def assert_text(self, selector, value):
         Logger.info("Simulation: assert %s has text %s" % (selector, value))
         self.assert_attr(selector, 'text', value)
-
-    def _mark_assertion(self, widget):
-        from kivy.graphics import Color, Rectangle
-
-        with widget.canvas.after:
-            color = Color(0, 1, 0, .8)
-            rect_pos = (widget.x + widget.width / 2, widget.y + widget.height / 2)
-            rectangle = Rectangle(pos=rect_pos, size=(0, 0))
-            Animation(a=0, duration=self.EXECUTE_STEP_DELAY / 2, t='in_out_cubic').start(color)
-            Animation(size=widget.size,
-                      pos=widget.pos,
-                      duration=self.EXECUTE_STEP_DELAY / 2,
-                      t='in_out_cubic').start(rectangle)
-
-    def _mark_event(self, widget):
-        from kivy.graphics import Ellipse, Color
-
-        with widget.canvas.after:
-            color = Color(1, 0, 1, .8)
-            d = min(widget.size)
-            circle_pos = (widget.x + widget.width / 2, widget.y + widget.height / 2)
-            circle = Ellipse(pos=circle_pos, size=(0, 0))
-            Animation(a=0, duration=self.EXECUTE_STEP_DELAY / 2, t='in_out_cubic').start(color)
-
-            point_pos = (widget.x + widget.width/2 - d / 2, widget.y) if widget.width > widget.height\
-                else (widget.x, widget.y + widget.height/2 - d / 2)
-
-            Animation(size=(d, d),
-                      pos=point_pos,
-                      duration=self.EXECUTE_STEP_DELAY / 2,
-                      t='in_out_cubic').start(circle)
