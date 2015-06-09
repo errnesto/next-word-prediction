@@ -1,4 +1,5 @@
-Cython
+cython
+pygame
 Kivy
 pytest
 pytest-xdist
