@@ -1,10 +1,12 @@
 # coding=utf-8
 import codecs
 import re
-import operator
-from rcdtype import *
+import math
+from operator import itemgetter
+from recordtype import recordtype
 
-Vword = recordtype('Vword', 'count group')
+WordData = recordtype('WordData', 'count group')
+PreWord  = recordtype('PreWord', 'word count')
 
 class Learner():
     """Parses text files to generate n-grams and cathegories
@@ -14,15 +16,11 @@ class Learner():
 
     # comments in the form key : value
 
-    vocabulary  = [] # word : Vword
+    vocabulary      = {} # word : WordData
+    predecessors_of = {} # word : PreWord
 
-    predecessors_of       = [] # word : [pre_words]
-    successors_of         = [] # word : [(succ_word, count)]
-    predecessor_groups_of = [] # word : [pre_group]
-    succsessor_groups_of  = [] # word : [succ_group]
-
-    words_predecessing    = [] # group : {word : count}
-    words_succsessing     = [] # group : {word : count}
+    group_bigramm_counts = {} # group_bigramm_name : count
+    group_counts         = {} # group_index : count
 
     def __init__(self):
         self.build_vocabulary()
@@ -57,60 +55,95 @@ class Learner():
     def build_vocabulary(self):
         words = self.parse_file("wiki_00")
 
-        for group, word in enumerate(words):
-            if word in self.vocavulary:
-                self.vocavulary[word].count += 1
+        pre_word = None
+        for word in words:
+            # add to vocabulary with count and class 0
+            if word in self.vocabulary:
+                self.vocabulary[word].count += 1
             else:
-                self.vocavulary[word] = Vword(1, group) #we use integers for group names
+                self.vocabulary[word] = WordData(1, 0) #we use integers for group names
 
+            # store predecessors
+            if word in self.predecessors_of:
+                found = False
+                for pre in self.predecessors_of[word]:
+                    if pre.word == pre_word:
+                        pre.count += 1
+                        found = True
+                        break
+
+                if not found and pre_word != None:
+                    self.predecessors_of[word].append(PreWord(pre_word, 1))
+            elif pre_word != None:
+                self.predecessors_of[word] = [PreWord(pre_word, 1)]
+
+            pre_word = word
         
 
     def map_words_to_classes(self):
         INITAL_NUMBER_OF_GROUPS = 100
-        sorted_vocabulary = sorted(self.vocavulary.items(), key=operator.itemgetter(1), reverse = True)
-        rare_words        = map(lambda tup: tup[0], sorted_vocabulary[INITAL_NUMBER_OF_GROUPS - 1:])
+        sorted_vocabulary       = sorted(self.vocabulary.items(), key=lambda x: x[1].count, reverse=True)
+        most_freguent_words     = sorted_vocabulary[:INITAL_NUMBER_OF_GROUPS - 1]
 
-        # put all rare words in the same group
-        for word in rare_words:
-            self.vocabulary[word].group = -1 # we are shure -1 is not used as a group name yet
+        # assign a gruop to each of the most frequent words
+        for group, wordTuple in enumerate(most_freguent_words):
+            word = wordTuple[0]
+            self.vocabulary[word].group = group + 1 # all other words are in group 0 so we start with group 1
 
         i = 0
         while i < 1:
             i += 1
 
-            for word, word_count in self.vocabulary:
-                for group in self.groups:
-                    print(word, word_count)
-                    # remove 'word' from its class
-                    # add 'word' to 'class'
-                    # claculate perplexity
-                    # store exchange with min perplexity as 'min_perplexity_class'
+            for word in self.vocabulary:
+                print word
+                min_perplexity       = self.calc_perplexity()
+                min_perplexity_group = self.vocabulary[word].group
 
-                # move word from its class to 'min_perplexity_class'
+                for group in self.group_counts:
+                    # move word to other group
+                    if group != self.vocabulary[word].group:
+                        self.vocabulary[word].group = group
+
+                    perpelxity = self.calc_perplexity()
+                    if perpelxity < min_perplexity:
+                        min_perplexity       = perpelxity
+                        min_perplexity_group = group
+
+                # move word from its group to group which results in minimum perlexity
+                self.vocabulary[word].group = min_perplexity_group
 
     def calc_perplexity(self):
-        # for every group bigramm
-            # add the number of occurences x log the number of occurences
-        # for every group
-            # add the number of occurences x log the number of occurences
-        # for everx word 
-            # add the number of occurences x log the number of occurencess
+        self.count_groups()
+        sum1 = sum2 = sum3 = 0
+        for group_bigramm_count in self.group_bigramm_counts.itervalues():
+            sum1 += group_bigramm_count * math.log(group_bigramm_count)
 
-    def generate_counts(self, word):
-        predecessors = self.predecessors_of[word]
-        successors   = self.successors_of[word]
+        for group_count in self.group_counts.itervalues():
+            sum2 += group_count * math.log(group_count)
 
-        for pre_word in predecessors:
-            bigrams   = filter(lambda s: s == word, self.successors_of[pre_word])
-            pre_group = vocabulary[pre_word].group
+        # TO DO: this does not change
+        for wordData in self.vocabulary.itervalues():
+            sum2 += wordData.count * math.log(wordData.count)
 
-            self.words_succsessing[pre_group][word] += len(bigrams)
-            self.predecessor_groups_of[word].append(pre_group)
+        return sum1 - 2 * sum2 + sum3
+        
+    def count_groups(self):
+        for word, wordData in self.vocabulary.iteritems():
+            if wordData.group in self.group_counts:
+                self.group_counts[wordData.group] += 1
+            else:
+                self.group_counts[wordData.group] = 1
 
-        for succ_word, count in successors:
-            succ_group = vocabulary[succ_word].group
+            # count group bigrams
+            predecessors = self.predecessors_of[word]
+            for pre_word in predecessors:
+                pre_group = self.vocabulary[pre_word.word].group
+                group_bigramm_name = str(pre_group) + '_' + str(wordData.group)
 
-            self.words_predecessing[succ_group][word] += count
-            self.succsessor_groups_of[word].append(succ_group)
+                if group_bigramm_name in self.group_bigramm_counts:
+                    self.group_bigramm_counts[group_bigramm_name] += pre_word.count
+                else:
+                    self.group_bigramm_counts[group_bigramm_name] = pre_word.count
+
 
 Learner()

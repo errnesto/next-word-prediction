@@ -4,3 +4,4 @@ Kivy
 pytest
 pytest-xdist
 lxml
+recordtype
