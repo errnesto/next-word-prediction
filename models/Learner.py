@@ -2,6 +2,7 @@
 import codecs
 import re
 import math
+from collections import defaultdict
 from operator import itemgetter
 from recordtype import recordtype
 
@@ -15,20 +16,18 @@ class Learner():
     """
     INITAL_NUMBER_OF_GROUPS = 20
 
-    # comments in the form key : value
+    vocabulary      = defaultdict(WordData)                 # word : WordData
+    predecessors_of = defaultdict(set)                      # word : {word}
+    successors_of   = defaultdict(lambda: defaultdict(int)) # word : {word : count}
 
-    vocabulary      = {} # word : WordData
-    predecessors_of = {} # word : {word}
-    successors_of   = {} # word : {word : count}
+    group_bigramm_counts = defaultdict(int) # group_bigramm_name : count
+    group_counts         = defaultdict(int) # group_index : count
 
-    group_bigramm_counts = {} # group_bigramm_name : count
-    group_counts         = {} # group_index : count
+    predecessor_groups_of = defaultdict(set) # word : {pre_group}
+    succsessor_groups_of  = defaultdict(set) # word : {succ_group}
 
-    predecessor_groups_of = {} # word : {pre_group}
-    succsessor_groups_of  = {} # word : {succ_group}
-
-    words_predecessing = {} # group : {word : count}
-    words_succsessing  = {} # group : {word : count}
+    words_predecessing = defaultdict(lambda: defaultdict(int)) # group : {word : count}
+    words_succsessing  = defaultdict(lambda: defaultdict(int)) # group : {word : count}
 
     wordEntropy = 0
 
@@ -78,17 +77,12 @@ class Learner():
             wordData.count += 1
             self.vocabulary[word] = wordData
 
-            # store predecessors
             if pre_word != None:
-                old_predecessors = self.predecessors_of.get(word, {pre_word})
-                self.predecessors_of[word] = old_predecessors.add(pre_word)
+                # store predecessors
+                self.predecessors_of[word].add(pre_word)
 
                 # store succsessors with count
-                old_successors       = self.successors_of.get(pre_word, {})
-                old_successors_count = old_successors.get(word, 0)
-
-                self.successors_of[pre_word]       = old_successors
-                self.successors_of[pre_word][word] = old_successors_count + 1
+                self.successors_of[pre_word][word] += 1
 
             pre_word = word        
 
@@ -115,8 +109,7 @@ class Learner():
 
         for word, wordData in self.vocabulary.iteritems():
             #count groups
-            old_group_count = self.group_counts.get(wordData.group, 0)
-            self.group_counts[wordData.group] = old_group_count + 1
+            self.group_counts[wordData.group] += 1
 
             predecessors = self.predecessors_of[word]
             for pre_word in predecessors:
@@ -125,35 +118,22 @@ class Learner():
                 group_bigramm_name = str(pre_word_group) + '_' + str(wordData.group)
 
                 # count group bigrams
-                old_bigram_count = self.group_bigramm_counts.get(group_bigramm_name, 0)
-                self.group_bigramm_counts[group_bigramm_name] = old_bigram_count + 1
+                self.group_bigramm_counts[group_bigramm_name] += 1
 
                 # store predecessor groups
-                old_predecessor_groups = self.predecessor_groups_of.get(word, set())
-                self.predecessor_groups_of[word] = predecessor_groups.add(pre_word_group)
+                self.predecessor_groups_of[word].add(pre_word_group)
 
                 # store words predecessing group of current word
-                old_pre_words_of_group = self.words_predecessing.get(wordData.group, {})
-                old_pre_words_count    = old_pre_words_of_group.get(pre_word, 0)
-
-                self.words_predecessing[wordData.group]           = old_pre_words_of_group
-                self.words_predecessing[wordData.group][pre_word] = old_pre_words_count + 1
+                self.words_predecessing[wordData.group][pre_word] += 1
 
             successors = self.successors_of[word]
             for succ_word in successors:
                 # store succsessor groups
                 succ_word_group = self.vocabulary[succ_word].group
-                old_word_set    = self.succsessor_groups_of.get(word, set())
-
-                self.succsessor_groups_of[word] = old_word_set.add(succ_word_group)
+                self.succsessor_groups_of[word].add(succ_word_group)
 
                 # store words succsessing group of current word
-                old_succ_words_of_group = self.words_succsessing.get(wordData.group, {})
-                old_succ_word_count     = old_succ_words_of_group.get(succ_word, 0)
-
-                self.words_succsessing[wordData.group]            = old_succ_words_of_group
-                self.words_succsessing[wordData.group][succ_word] = old_succ_word_count + 1
-
+                self.words_succsessing[wordData.group][succ_word] += 1
 
         # calculate value needed for calculating perplexity
         for wordData in self.vocabulary.itervalues():
