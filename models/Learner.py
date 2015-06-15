@@ -170,12 +170,13 @@ class Learner():
         self.setup_inital_data()
         perpelxity = self.calc_perplexity()
 
+        print vocabulary
+
         i = 0
         while i < 1:
             i += 1
 
             for word in self.vocabulary:
-                print word
                 min_perplexity       = perpelxity
                 min_perplexity_group = self.vocabulary[word].group
 
