@@ -145,24 +145,70 @@ class Learner():
 
         for pre_word in predecessors:
             bigram_count   = self.successors_of[pre_word][word]
-            pre_word_group = vocabulary[pre_word].group
+            pre_word_group = self.vocabulary[pre_word].group
 
             self.words_succsessing[pre_word_group][word] += bigram_count
             self.predecessor_groups_of[word].add(pre_word_group)
 
-        for succ_word, count in successors:
-            succ_group = vocabulary[succ_word].group
+        for succ_word, count in successors.iteritems():
+            succ_group = self.vocabulary[succ_word].group
 
             self.words_predecessing[succ_group][word] += count
             self.succsessor_groups_of[word].add(succ_group)
 
+    def move_word(self, word, to_group):
+        from_group = self.vocabulary[word].group
+        self.vocabulary[word].group = to_group
+        self.update_help_counts(word)
+
+        # update counts
+
+        #remove from group
+        self.group_counts[from_group] -= self.vocabulary[word].count
+        # add to group
+        self.group_counts[to_group] += self.vocabulary[word].count
+
+        for group in self.group_counts:
+            if group != from_group:
+                #remove from group
+                group_bigramm_name1 = str(group) + "_" + str(from_group)
+                group_bigramm_name2 = str(from_group) + "_" + str(group)
+                self.group_bigramm_counts[group_bigramm_name1] -= self.words_succsessing[group][word]
+                self.group_bigramm_counts[group_bigramm_name2] -= self.words_predecessing[group][word] 
+
+                #add to group
+                group_bigramm_name3 = str(group) + "_" + str(to_group)
+                group_bigramm_name4 = str(to_group) + "_" + str(group)
+                self.group_bigramm_counts[group_bigramm_name3] += self.words_succsessing[group][word]
+                self.group_bigramm_counts[group_bigramm_name4] += self.words_predecessing[group][word]
+
+        #remove from group
+        self_bigramm_name = str(from_group) + "_" + str(from_group)
+        self.group_bigramm_counts[self_bigramm_name] = self.group_bigramm_counts[self_bigramm_name] 
+        - self.words_succsessing[from_group][word] 
+        - self.words_predecessing[from_group][word]
+        + self.successors_of[word][word]
+
+        # add to groups
+        self_bigramm_name = str(to_group) + "_" + str(to_group)
+        self.group_bigramm_counts[self_bigramm_name] = self.group_bigramm_counts[self_bigramm_name] 
+        + self.words_succsessing[to_group][word] 
+        + self.words_predecessing[to_group][word]
+        - self.successors_of[word][word]
+
+        print self.group_bigramm_counts
+
+        
+
     def calc_perplexity(self):
         sum1 = sum2 = 0
         for group_bigramm_count in self.group_bigramm_counts.itervalues():
-            sum1 += group_bigramm_count * math.log(group_bigramm_count)
+            if group_bigramm_count > 0:
+                sum1 += group_bigramm_count * math.log(group_bigramm_count)
 
         for group_count in self.group_counts.itervalues():
-            sum2 += group_count * math.log(group_count)
+            if group_count > 0:
+                sum2 += group_count * math.log(group_count)
 
         return sum1 - 2 * sum2 + self.wordEntropy
 
@@ -170,28 +216,36 @@ class Learner():
         self.setup_inital_data()
         perpelxity = self.calc_perplexity()
 
-        print vocabulary
+        print self.group_bigramm_counts
 
-        i = 0
-        while i < 1:
-            i += 1
+        did_update = True
+        while did_update:
+            did_update = False
 
             for word in self.vocabulary:
-                min_perplexity       = perpelxity
-                min_perplexity_group = self.vocabulary[word].group
+                min_perplexity       = self.calc_perplexity()
+                old_group            = self.vocabulary[word].group
+                min_perplexity_group = old_group
 
-                for group in self.group_counts:
-                    # move word to other group
-                    if group != self.vocabulary[word].group:
-                        self.vocabulary[word].group = group
+                for group in self.group_counts:                    
+                    if group != old_group:
+                        self.move_word(word, group)
+                        temp_perpelxity = self.calc_perplexity()
 
-                    temp_perpelxity = self.calc_perplexity()
-                    if temp_perpelxity < min_perplexity:
-                        min_perplexity       = temp_perpelxity
-                        min_perplexity_group = group
+                        if temp_perpelxity < min_perplexity:
+                            min_perplexity       = temp_perpelxity
+                            min_perplexity_group = group
+                            did_update = True   
+                        break
 
                 # move word from its group to group which results in minimum perlexity
-                perlexity                   = min_perplexity
-                self.vocabulary[word].group = min_perplexity_group
+                perlexity = min_perplexity
+                if min_perplexity_group != old_group:
+                    print "move word " + word + " from group " + str(old_group) + " to group " + str(min_perplexity_group)
+                    self.move_word(word, min_perplexity_group)
+                break
+
+            print "----"
+            break
 
 Learner()
