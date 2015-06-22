@@ -64,12 +64,12 @@ class BrownCluster:
             pre_word = word
 
         # normalize counts by text length
-        for cluster_index in self.pre_cluster_propabilities:
-            self.pre_cluster_propabilities[cluster_index] /= self.number_of_clusters
-        for cluster_index in self.cluster_propabilities:
-            self.cluster_propabilities[cluster_index] /= self.number_of_clusters
-        for cluster_bigramm_name in self.cluster_bigramm_propabilities:
-            self.cluster_bigramm_propabilities[cluster_bigramm_name] /= self.number_of_clusters
+        # for cluster_index in self.pre_cluster_propabilities:
+        #     self.pre_cluster_propabilities[cluster_index] /= self.number_of_clusters
+        # for cluster_index in self.cluster_propabilities:
+        #     self.cluster_propabilities[cluster_index] /= self.number_of_clusters
+        # for cluster_bigramm_name in self.cluster_bigramm_propabilities:
+        #     self.cluster_bigramm_propabilities[cluster_bigramm_name] /= self.number_of_clusters
 
     def calculate_quality(self, clusters_to_check):
         quality = 0.0
