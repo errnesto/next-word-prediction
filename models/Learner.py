@@ -1,20 +1,21 @@
 # coding=utf-8
 import codecs
 import re
-import math
 from collections import defaultdict
 from operator import itemgetter
 from recordtype import recordtype
+from LogCalculator import LogCalculator
 
-WordData    = recordtype('WordData', 'count group')
-CountedWord = recordtype('PreWord', 'word count')
+WordData      = recordtype('WordData', 'count group')
+CountedWord   = recordtype('PreWord', 'word count')
+logCalculator = LogCalculator()
 
 class Learner():
-    """Parses text files to generate n-grams and cathegories
+    """Parses text files and clusters the words in it
 
     detailed info here
     """
-    INITAL_NUMBER_OF_GROUPS = 20
+    NUMBER_OF_GROUPS = 20
 
     def __init__(self, corpus):
         self.vocabulary      = defaultdict(WordData)                 # word : WordData
@@ -30,11 +31,10 @@ class Learner():
         self.predecessor_word_count_of_group = defaultdict(int) # group : word_count
         self.succsessor_word_count_of_group  = defaultdict(int) # group : word_count
 
-        self.wordEntropy = 0
-
         # set up 
-        words = self.parse_file(corpus[0])
-        self.build_vocabulary(words=words)
+        for file_path in corpus:
+            words = self.parse_file(file_path)
+            self.build_vocabulary(words=words)
         self.setup_inital_data()
 
     def parse_file(self, file_path):
@@ -46,11 +46,8 @@ class Learner():
         f = codecs.open(file_path, mode="r", encoding="utf-8")
         content = f.read()
 
-        # strip xml <doc> tags
-        content = re.sub(r"<doc.*>|<\/doc>", "", content)
-
         # strip special characters. Note that "." is not removed yet
-        content = re.sub(u'[\]\[!"“„#$%&\\\'()*+,\/:;<=>?@\^_`{|}~-]', "", content)
+        content = re.sub(u'[\]\[!"“„#$%&\\\'()*+,\/:;<=>-?@\^_`{|}~-]', "", content)
 
         # find boundaries of sentences
         content = re.sub(ur"([a-z])\.\s([A-Z0-9])", r"\1 <S/> \2", content)
@@ -58,6 +55,10 @@ class Learner():
 
         # TO DO:
         # maybe add a list of common abbrevations to remove spaces from them here
+        # remove dots
+        # replace numbers with <number>
+        # replace one letter word with <unkown>
+
 
         words = content.split()
 
@@ -99,7 +100,7 @@ class Learner():
         - wordEntropy
         """
         sorted_vocabulary   = sorted(self.vocabulary.items(), key=lambda x: x[1].count, reverse=True)
-        most_freguent_words = sorted_vocabulary[:self.INITAL_NUMBER_OF_GROUPS - 1]
+        most_freguent_words = sorted_vocabulary[:self.NUMBER_OF_GROUPS - 1]
 
         # assign a gruop to each of the most frequent words
         for group, wordTuple in enumerate(most_freguent_words):
@@ -113,7 +114,7 @@ class Learner():
             predecessors = self.predecessors_of[word]
             for pre_word in predecessors:
                 pre_word_group     = self.vocabulary[pre_word].group
-                bigramm_count       = self.successors_of[pre_word][word]
+                bigramm_count      = self.successors_of[pre_word][word]
                 group_bigramm_name = str(pre_word_group) + '_' + str(wordData.group)
 
                 # count group bigrams
@@ -127,10 +128,6 @@ class Learner():
                 # store succsessor groups
                 succ_word_group = self.vocabulary[succ_word].group
                 self.succsessor_groups_of[word].add(succ_word_group)
-
-        # calculate value needed for calculating perplexity
-        for wordData in self.vocabulary.itervalues():
-            self.wordEntropy += wordData.count * math.log(wordData.count)
 
     def update_help_counts(self, word):
         self.predecessor_word_count_of_group = defaultdict(int)
@@ -208,56 +205,62 @@ class Learner():
     def calc_perplexity(self, group_bigramm_counts, group_counts):
         sum1 = sum2 = 0
         for group_bigramm_count in group_bigramm_counts.itervalues():
-            if group_bigramm_count > 0:
-                sum1 += group_bigramm_count * math.log(group_bigramm_count)
+            if group_bigramm_count > 1:
+                sum1 += group_bigramm_count * logCalculator.log(group_bigramm_count)
 
         for group_count in group_counts.itervalues():
-            if group_count > 0:
-                sum2 += group_count * math.log(group_count)
+            if group_count > 1:
+                sum2 += group_count * logCalculator.log(group_count)
 
-        return sum1 - 2 * sum2 + self.wordEntropy
+        return sum1 - 2 * sum2
 
     def map_words_to_classes(self):
         perpelxity = self.calc_perplexity(self.group_bigramm_counts, self.group_counts)
 
         did_update = True
-        while did_update:
+        i = 0
+        while did_update and i < 5:
             did_update = False
 
             for word in self.vocabulary:
-                min_perplexity       = perpelxity
-                old_group            = self.vocabulary[word].group
-                min_perplexity_group = old_group
+                min_perplexity = perpelxity
+                old_group      = self.vocabulary[word].group
+                new_group      = old_group
                 
                 self.update_help_counts(word)
                 self.remove_word_from_its_group(word)
 
-                for group in self.group_counts:                    
-                    if group != old_group:
+                for group in self.group_counts:
+                    if group != old_group:                   
                         # move word to group without side effects
                         (current_group_bigramm_counts, current_group_counts) = self.move_word_to_group(word, group)
                         temp_perpelxity = self.calc_perplexity(current_group_bigramm_counts, current_group_counts)
 
                         if temp_perpelxity < min_perplexity:
-                            min_perplexity       = temp_perpelxity
-                            min_perplexity_group = group
+                            min_perplexity = temp_perpelxity
+                            new_group      = group
+
 
                 # move word from its group to group which results in minimum perpelxity permanetly
-                (self.group_bigramm_counts, self.group_counts) = self.move_word_to_group(word, min_perplexity_group)
-                if min_perplexity_group != old_group:
-                    print word + " " + str(old_group) + " -> " + str(min_perplexity_group)
+                (self.group_bigramm_counts, self.group_counts) = self.move_word_to_group(word, new_group)
+                if new_group != old_group:
+                    print str(i) + " | " + str(old_group) + " -> " + str(new_group) + "  " + word 
                     perpelxity = min_perplexity
                     did_update = True
 
-            print ("---", perpelxity)
+            i += 1
 
     def print_groups(self):
         groups = defaultdict(list)
 
+        sorted_vocabulary   = sorted(self.vocabulary.items(), key=lambda x: x[1].count, reverse=True)
         for word, wordData in self.vocabulary.iteritems():
             groups[wordData.group].append(word)
 
         for group in groups:
-            print (group, groups[group])
+            sorted_group = sorted(groups[group], key=lambda word: self.vocabulary[word].count)
+            print (group, sorted_group[:5], len(groups[group]))
 
-# Learner(corpus=["../_tests/units/test_corpus"])
+l = Learner(corpus=["peterchens_mondfahrt", "mann_im_mond", "briefe_an_eine_freundin", "alice_im_wunderland"])
+l.map_words_to_classes()
+l.print_groups()
