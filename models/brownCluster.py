@@ -6,8 +6,9 @@ class BrownCluster:
     def __init__(self):
         token_file_path = path.join(path.dirname(__file__), "../data/training/tokens.txt")
         f = open(token_file_path)
-        
+
         content   = f.read()
+        f.close
         self.text = content.split()
 
         # count tokens
@@ -218,4 +219,4 @@ class BrownCluster:
             self.number_of_clusters -= 1
 
 BC = BrownCluster()
-BC.word_cluster_fast(desired_number_of_clusters=20, m=500)
+BC.cluster_words(desired_number_of_clusters=20, m=500)
