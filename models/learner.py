@@ -9,10 +9,10 @@ class Learner():
     def __init__(self):
         self.train_file_path = path.join(path.dirname(__file__), "../data/training/")
         self.training_files  = [
-            "alice_im_wunderland.txt", 
+            # "alice_im_wunderland.txt", 
             "briefe_an_eine_freundin.txt", 
-            "mann_im_mond.txt", 
-            "peterchens_mondfahrt.txt"
+            # "mann_im_mond.txt", 
+            # "peterchens_mondfahrt.txt"
         ]
         
     def parse_file(self, filenames):
@@ -33,7 +33,7 @@ class Learner():
             f.close()
 
             # strip special characters. Note that "." is not removed yet
-            content = re.sub(u'[\]\[!"“„#$%&\\\'()*+,\/:;<=>-?@\^_`{|}~-»«]', "", content)
+            content = re.sub(u'[\]\[!"“„#$%&\\\'()*+,\/:;<=>-?@\^_\-»«]', "", content)
 
             # find boundaries of sentences
             content = re.sub(ur"([a-z])\.\s([A-Z0-9])", r"\1 <S/> \2", content)
