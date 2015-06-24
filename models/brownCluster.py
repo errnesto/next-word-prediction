@@ -12,18 +12,20 @@ class BrownCluster:
         f.close
         self.text = content.split()
 
-        self.LCC                              = {} # merged_clusters_name : total graph weight change
         self.clusters                         = [] # list of clusters
         self.clusters_by_word                 = {}
         self.cluster_transition_propabilities = defaultdict(lambda: defaultdict(float))
         self.cluster_propabilities            = defaultdict(float)
         self.text_length                      = len(self.text)
+        self.merge_losses                     = defaultdict(lambda: defaultdict(float))
 
         self.set_up_counts()
         self.build_graph()
 
         for cluster in self.clusters:
-            print cluster.words[0], cluster.edges
+            print cluster.words[0], cluster.name
+
+        self.calc_potential_loss()
 
     def set_up_counts(self):
         # count tokens
@@ -90,10 +92,18 @@ class BrownCluster:
             return d + e
 
     def calc_potential_loss(self):
+        min_loss = None
         for cluster in self.clusters:
             for other_cluster in self.clusters:
-                merged_node_weight = self.calc_merged_node_weight(cluster, other_cluster)
-                loss = cluster.node_weight + other_cluster.node_weight - cluster.edges[other_cluster.name] - merged_node_weight
+                if other_cluster > cluster: # loss(a_b) == loss(b_a) so dont calculate twice | loss(a_a) would be doing nothing
+                    merged_node_weight = self.calc_merged_node_weight(cluster, other_cluster)
+                    loss = cluster.node_weight + other_cluster.node_weight - cluster.edges[other_cluster.name] - merged_node_weight
+                    if loss < min_loss or min_loss is None:
+                        min_loss = loss
+                    self.merge_losses[cluster.name][other_cluster.name] = loss
+                    print cluster.name, other_cluster.name, loss
+        print "min_loss", min_loss
+
 
     def calc_merged_node_weight(self, clusterA, clusterB):
         adjacent_clusters = set(clusterA.edges.keys() + clusterB.edges.keys())
@@ -106,11 +116,14 @@ class BrownCluster:
                                                      + self.cluster_transition_propabilities[clusterB.name][other_cluster]
             other_propabilities = self.cluster_propabilities[other_cluster] \
                                   * (self.cluster_propabilities[clusterA.name] + self.cluster_propabilities[clusterB.name])
-
-            quality_other_to_merged = transition_propability_other_to_merged \
-                                      * math.log(transition_propability_other_to_merged / other_propabilities)
-            quality_merged_to_other = transition_propability_merged_to_other \
-                                      * math.log(transition_propability_merged_to_other / other_propabilities)
+            quality_other_to_merged = 0
+            if transition_propability_other_to_merged > 0:
+                quality_other_to_merged = transition_propability_other_to_merged \
+                                          * math.log(transition_propability_other_to_merged / other_propabilities)
+            quality_merged_to_other = 0
+            if transition_propability_merged_to_other > 0:
+                quality_merged_to_other = transition_propability_merged_to_other \
+                                          * math.log(transition_propability_merged_to_other / other_propabilities)
             merged_node_weight += quality_other_to_merged + quality_merged_to_other
 
         return merged_node_weight
@@ -119,8 +132,8 @@ class Cluster():
     def __init__(self, name, words):
         self.name        = name
         self.words       = words
-        self.edges       = {} # cluster : weight
-        self.node_weight = 0
+        self.edges       = defaultdict(float) # cluster : weight
+        self.node_weight = 0.0
 
     def calc_node_weight(self):
         for edge_weight in self.edges.itervalues():
