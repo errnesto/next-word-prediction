@@ -17,14 +17,12 @@ class BrownCluster:
         self.cluster_transition_propabilities = defaultdict(lambda: defaultdict(float))
         self.cluster_propabilities            = defaultdict(float)
         self.text_length                      = len(self.text)
-        self.merge_losses                     = defaultdict(lambda: defaultdict(float))
+        self.potential_deltas                 = {}
 
-        self.set_up_counts()
-        self.build_graph()
-        self.naive()
+        self.main()
 
         for cluster in self.clusters:
-            print cluster.words[0], cluster.name
+            print cluster.words, cluster.name
 
     def set_up_counts(self):
         # count tokens
@@ -65,6 +63,7 @@ class BrownCluster:
 
     def build_graph(self):
         for cluster in self.clusters:
+            cluster.edges = defaultdict(float)
             for other_cluster in self.clusters:
                 edge_weight = self.calc_edge_weight(cluster.name, other_cluster.name)
                 if edge_weight != 0:
@@ -90,20 +89,46 @@ class BrownCluster:
                 e = self.cluster_transition_propabilities[other_cluster_name][cluster_name] * math.log(c)
             return d + e
 
-    def calc_potential_loss(self):
-        min_loss = None
+    def update_propabilities(self):
+        self.cluster_transition_propabilities = defaultdict(lambda: defaultdict(float))
+        self.cluster_propabilities            = defaultdict(float)
+        # cluster propabilities
+        pre_word = None
+        for word in self.text:
+            cluster_name = self.clusters_by_word[word].name
+            self.cluster_propabilities[cluster_name] += 1
+
+            if pre_word != None:
+                pre_cluster_name = self.clusters_by_word[pre_word].name
+                self.cluster_transition_propabilities[pre_cluster_name][cluster_name] += 1
+            
+            pre_word = word
+
+        # normalize counts by text length
+        for cluster_index in self.cluster_propabilities:
+            self.cluster_propabilities[cluster_index] /= self.text_length
+        for cluster_index1 in self.cluster_transition_propabilities:
+            for cluster_index2 in self.cluster_transition_propabilities[cluster_index1]:
+                self.cluster_transition_propabilities[cluster_index1][cluster_index2] /= self.text_length
+
+    def init_deltas(self):
+        max_loss = 0
         for cluster in self.clusters:
             for other_cluster in self.clusters:
                 if other_cluster > cluster: # loss(a_b) == loss(b_a) so dont calculate twice | loss(a_a) would be doing nothing
-                    merged_node_weight = self.calc_merged_node_weight(cluster, other_cluster)
-                    loss = cluster.node_weight + other_cluster.node_weight - cluster.edges[other_cluster.name] - merged_node_weight
-                    if loss < min_loss or min_loss is None:
-                        min_loss = loss
-                        x = (cluster, other_cluster)
-                    self.merge_losses[cluster.name][other_cluster.name] = loss
-                    print cluster.name, other_cluster.name, loss
-        return x
+                   self.set_delta_for(cluster, other_cluster) 
 
+    def set_delta_for(self, cluster, other_cluster):
+        merged_node_weight = self.calc_merged_node_weight(cluster, other_cluster)
+
+        loss = cluster.node_weight + other_cluster.node_weight - cluster.edges[other_cluster.name] - merged_node_weight
+        self.potential_deltas[loss] = (cluster, other_cluster)
+
+    def get_max_delta(self):
+        losses  = sorted(self.potential_deltas.keys())
+        max_key = losses[-1]
+
+        return self.potential_deltas[max_key]
 
     def calc_merged_node_weight(self, clusterA, clusterB):
         adjacent_clusters = set(clusterA.edges.keys() + clusterB.edges.keys())
@@ -128,11 +153,30 @@ class BrownCluster:
 
         return merged_node_weight
 
-    def naive(self):
+    def main(self):
+        self.set_up_counts()
+        self.build_graph()
+        self.init_deltas()
+
         i = 5
-        while i > 3:
-            c1, c2 = self.calc_potential_loss()
-            c1.words += c2.words
+        while i > 2:
+            c1, c2 = self.get_max_delta()
+
+            merged_cluster = Cluster(name=len(self.clusters), words=c1.words + c2.words)
+            for word in c1.words:
+                self.clusters_by_word[word] = merged_cluster
+            for word in c2.words:
+                self.clusters_by_word[word] = merged_cluster
+
+            self.clusters.remove(c1)
+            self.clusters.remove(c2)
+            self.clusters.append(merged_cluster)
+
+            self.update_propabilities()
+            for cluster in self.clusters:
+                for other_cluster in self.clusters:
+                    if other_cluster > cluster and cluster != c1 and cluster != c2:
+                        print cluster.name, other_cluster.name
             i -= 1
 
 class Cluster():
