@@ -21,11 +21,10 @@ class BrownCluster:
 
         self.set_up_counts()
         self.build_graph()
+        self.naive()
 
         for cluster in self.clusters:
             print cluster.words[0], cluster.name
-
-        self.calc_potential_loss()
 
     def set_up_counts(self):
         # count tokens
@@ -100,9 +99,10 @@ class BrownCluster:
                     loss = cluster.node_weight + other_cluster.node_weight - cluster.edges[other_cluster.name] - merged_node_weight
                     if loss < min_loss or min_loss is None:
                         min_loss = loss
+                        x = (cluster, other_cluster)
                     self.merge_losses[cluster.name][other_cluster.name] = loss
                     print cluster.name, other_cluster.name, loss
-        print "min_loss", min_loss
+        return x
 
 
     def calc_merged_node_weight(self, clusterA, clusterB):
@@ -128,10 +128,17 @@ class BrownCluster:
 
         return merged_node_weight
 
+    def naive(self):
+        i = 5
+        while i > 3:
+            c1, c2 = self.calc_potential_loss()
+            c1.words += c2.words
+            i -= 1
+
 class Cluster():
     def __init__(self, name, words):
-        self.name        = name
-        self.words       = words
+        self.name        = name # int
+        self.words       = words # list
         self.edges       = defaultdict(float) # cluster : weight
         self.node_weight = 0.0
 
