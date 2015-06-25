@@ -1,7 +1,6 @@
 import math
 import operator
 from os import path
-from collections import defaultdict
 
 class BrownCluster:
     def __init__(self):
@@ -12,19 +11,6 @@ class BrownCluster:
         f.close
         self.text = content.split()
 
-        self.clusters                         = [] # list of clusters
-        self.clusters_by_word                 = {}
-        self.cluster_transition_propabilities = defaultdict(lambda: defaultdict(float))
-        self.cluster_propabilities            = defaultdict(float)
-        self.text_length                      = len(self.text)
-        self.potential_deltas                 = {}
-
-        self.main()
-
-        for cluster in self.clusters:
-            print cluster.words, cluster.name
-
-    def set_up_counts(self):
         # count tokens
         token_counts = {}
         for word in self.text:
@@ -36,158 +22,192 @@ class BrownCluster:
         # create a cluster for each word
         # where cluster 1 contains the most frquent word 
         # and cluster n the least frequent word
-        sorted_words = sorted(token_counts.iteritems(), key=operator.itemgetter(1), reverse=True)
+        sorted_words         = sorted(token_counts.iteritems(), key=operator.itemgetter(1), reverse=True)
+        self.cluster_of_word = {}
+        self.clusters        = {}
+
         for i, word in enumerate(sorted_words):
-            cluster = Cluster(name=i, words=[word[0]])
-            self.clusters.append(cluster)
-            self.clusters_by_word[word[0]] = cluster        
+            self.cluster_of_word[word[0]] = i 
+            self.clusters[i]              = [word[0]]
 
-        # cluster propabilities
+        self.number_of_tokens   = len(token_counts)
+        self.number_of_clusters = self.number_of_tokens
+        self.calc_cluster_propabilities()
+
+    def calc_cluster_propabilities(self):
+        self.cluster_bigramm_propabilities = {}
+        self.cluster_propabilities         = {}
+
+        # count words in clusters and cluster bigrams
         pre_word = None
         for word in self.text:
-            cluster_name = self.clusters_by_word[word].name
-            self.cluster_propabilities[cluster_name] += 1
-
             if pre_word != None:
-                pre_cluster_name = self.clusters_by_word[pre_word].name
-                self.cluster_transition_propabilities[pre_cluster_name][cluster_name] += 1
-            
+                pre_cluster = self.cluster_of_word[pre_word]
+                cluster     = self.cluster_of_word[word]
+
+                if cluster in self.cluster_propabilities:
+                    self.cluster_propabilities[cluster] += 1.0
+                else:
+                    self.cluster_propabilities[cluster] = 1.0
+
+                cluster_bigramm_name = str(pre_cluster) + '#' + str(cluster)
+                if cluster_bigramm_name in self.cluster_bigramm_propabilities:
+                    self.cluster_bigramm_propabilities[cluster_bigramm_name] += 1.0
+                else:
+                    self.cluster_bigramm_propabilities[cluster_bigramm_name] = 1.0
+
             pre_word = word
 
         # normalize counts by text length
         for cluster_index in self.cluster_propabilities:
-            self.cluster_propabilities[cluster_index] /= self.text_length
-        for cluster_index1 in self.cluster_transition_propabilities:
-            for cluster_index2 in self.cluster_transition_propabilities[cluster_index1]:
-                self.cluster_transition_propabilities[cluster_index1][cluster_index2] /= self.text_length
+            self.cluster_propabilities[cluster_index] /= self.number_of_clusters
+        for cluster_bigramm_name in self.cluster_bigramm_propabilities:
+            self.cluster_bigramm_propabilities[cluster_bigramm_name] /= self.number_of_clusters
 
-    def build_graph(self):
-        for cluster in self.clusters:
-            cluster.edges = defaultdict(float)
-            for other_cluster in self.clusters:
-                edge_weight = self.calc_edge_weight(cluster.name, other_cluster.name)
-                if edge_weight != 0:
-                    cluster.edges[other_cluster.name] = edge_weight
+    def calculate_quality(self, clusters_to_check):
+        quality = 0.0
 
-        for cluster in self.clusters:
-            cluster.calc_node_weight()
+        # does only consider most frequent words
+        for cluster in range(0, clusters_to_check):
+            for other_cluster in range(0, clusters_to_check):
+                if (cluster != other_cluster
+                and cluster       in self.cluster_propabilities 
+                and other_cluster in self.cluster_propabilities):
+                    cluster_bigramm_name = str(cluster) + '#' + str(other_cluster)
 
-    def calc_edge_weight(self, cluster_name, other_cluster_name):
-        a = self.cluster_propabilities[cluster_name] * self.cluster_propabilities[other_cluster_name]
-        b = self.cluster_transition_propabilities[cluster_name][other_cluster_name] / a
+                    if cluster_bigramm_name in self.cluster_bigramm_propabilities:
+                        a = self.cluster_bigramm_propabilities[cluster_bigramm_name]
+                        b = self.cluster_propabilities[cluster] * self.cluster_propabilities[other_cluster]
+                        quality += a * math.log(a / b)
 
-        d = 0
-        if b != 0:
-            d = self.cluster_transition_propabilities[cluster_name][other_cluster_name] * math.log(b)
+        return quality
 
-        if (cluster_name == other_cluster_name):
-            return d 
-        else:
-            c = self.cluster_transition_propabilities[other_cluster_name][cluster_name] / a
-            e = 0
-            if c != 0:
-                e = self.cluster_transition_propabilities[other_cluster_name][cluster_name] * math.log(c)
-            return d + e
+    def merge(self, c1, c2, limit, permanent=False):
+        words_in_c2                   = self.clusters[c2]
+        c2_pre_propability            = None
+        c2_propability                = None
+        c2_c2_count                   = None
+        cluster_preceding_c2_counts   = {}
+        cluster_succsessing_c2_counts = {}
 
-    def update_propabilities(self):
-        self.cluster_transition_propabilities = defaultdict(lambda: defaultdict(float))
-        self.cluster_propabilities            = defaultdict(float)
-        # cluster propabilities
-        pre_word = None
-        for word in self.text:
-            cluster_name = self.clusters_by_word[word].name
-            self.cluster_propabilities[cluster_name] += 1
+        if permanent:
+            self.clusters[c1].extend(words_in_c2)
 
-            if pre_word != None:
-                pre_cluster_name = self.clusters_by_word[pre_word].name
-                self.cluster_transition_propabilities[pre_cluster_name][cluster_name] += 1
+        for word in words_in_c2:
+            self.cluster_of_word[word] = c1
+
+        if c2 in self.cluster_propabilities:
+            c2_propability = self.cluster_propabilities.pop(c2)
+
+            if c1 in self.cluster_propabilities:
+                self.cluster_propabilities[c1] += c2_propability
+            else:
+                self.cluster_propabilities[c1] = c2_propability
+
+        for cluster in range(0, limit):
+            if cluster != c2:
+                cluster_bigramm_name1 = str(cluster) + '#' + str(c2)
+                if cluster_bigramm_name1 in self.cluster_bigramm_propabilities:
+                    cluster_preceding_c2_counts[cluster] = self.cluster_bigramm_propabilities.pop(cluster_bigramm_name1)
+
+                    cluster_bigramm_name2 = str(cluster) + '#' + str(c1)
+                    if cluster_bigramm_name2 in self.cluster_bigramm_propabilities:
+                        self.cluster_bigramm_propabilities[cluster_bigramm_name2] += cluster_preceding_c2_counts[cluster]
+                    else:
+                        self.cluster_bigramm_propabilities[cluster_bigramm_name2] = cluster_preceding_c2_counts[cluster]
+
+                cluster_bigramm_name3 = str(c2) + '#' + str(cluster)
+                if cluster_bigramm_name3 in self.cluster_bigramm_propabilities:
+                    cluster_succsessing_c2_counts[cluster] = self.cluster_bigramm_propabilities.pop(cluster_bigramm_name3)
+
+                    cluster_bigramm_name4 = str(c1) + '#' + str(cluster)
+                    if cluster_bigramm_name4 in self.cluster_bigramm_propabilities:
+                        self.cluster_bigramm_propabilities[cluster_bigramm_name4] += cluster_succsessing_c2_counts[cluster]
+                    else:
+                        self.cluster_bigramm_propabilities[cluster_bigramm_name4] = cluster_succsessing_c2_counts[cluster]
+
+        c1_c1_name = str(c1) + '#' + str(c1)
+        c2_c2_name = str(c2) + '#' + str(c2)
+        if c2_c2_name in self.cluster_bigramm_propabilities:
+            c2_c2_count = self.cluster_bigramm_propabilities.pop(c2_c2_name)
+
+            if c1_c1_name in self.cluster_bigramm_propabilities:
+                self.cluster_bigramm_propabilities[c1_c1_name] += c2_c2_count
+            else:
+                self.cluster_bigramm_propabilities[c1_c1_name] = c2_c2_count
+
+
+        if permanent:
+            del self.clusters[c2]
+
+        return words_in_c2, c2_pre_propability, c2_propability, c2_c2_count, cluster_preceding_c2_counts, cluster_succsessing_c2_counts
+
+    def tmp_break(self, c1, c2, tmp):
+        words_in_c2                   = tmp[0]
+        c2_pre_propability            = tmp[1]
+        c2_propability                = tmp[2]
+        c2_c2_count                   = tmp[3]
+        cluster_preceding_c2_counts   = tmp[4]
+        cluster_succsessing_c2_counts = tmp[5]
+
+        for word in words_in_c2:
+            self.cluster_of_word[word] = c2
+
+        if c2_propability != None:
+            self.cluster_propabilities[c1] -= c2_propability
+            if self.cluster_propabilities[c1] <= 0:
+                del self.cluster_propabilities[c1]
+
+            self.cluster_propabilities[c2] = c2_propability
+
+        for cluster in cluster_preceding_c2_counts:
+            cluster_bigramm_name1 = str(cluster) + '#' + str(c2)
+            self.cluster_bigramm_propabilities[cluster_bigramm_name1] = cluster_preceding_c2_counts[cluster]
+
+            cluster_bigramm_name2 = str(cluster) + '#' + str(c1)
+            self.cluster_bigramm_propabilities[cluster_bigramm_name2] -= cluster_preceding_c2_counts[cluster]
+            if self.cluster_bigramm_propabilities[cluster_bigramm_name2] <= 0:
+                del self.cluster_bigramm_propabilities[cluster_bigramm_name2]
             
-            pre_word = word
+        for cluster in cluster_succsessing_c2_counts:
+            cluster_bigramm_name3 = str(c2) + '#' + str(cluster)
+            self.cluster_bigramm_propabilities[cluster_bigramm_name3] = cluster_succsessing_c2_counts[cluster]
 
-        # normalize counts by text length
-        for cluster_index in self.cluster_propabilities:
-            self.cluster_propabilities[cluster_index] /= self.text_length
-        for cluster_index1 in self.cluster_transition_propabilities:
-            for cluster_index2 in self.cluster_transition_propabilities[cluster_index1]:
-                self.cluster_transition_propabilities[cluster_index1][cluster_index2] /= self.text_length
+            cluster_bigramm_name4 = str(c1) + '#' + str(cluster)
+            self.cluster_bigramm_propabilities[cluster_bigramm_name4] -= cluster_succsessing_c2_counts[cluster]
+            if self.cluster_bigramm_propabilities[cluster_bigramm_name4] <= 0:
+                del self.cluster_bigramm_propabilities[cluster_bigramm_name4]
 
-    def init_deltas(self):
-        max_loss = 0
-        for cluster in self.clusters:
-            for other_cluster in self.clusters:
-                if other_cluster > cluster: # loss(a_b) == loss(b_a) so dont calculate twice | loss(a_a) would be doing nothing
-                   self.set_delta_for(cluster, other_cluster) 
+        c1_c1_name = str(c1) + '#' + str(c1)
+        if c2_c2_count != None and c1_c1_name in self.cluster_bigramm_propabilities: # fix this
+            self.cluster_bigramm_propabilities[c1_c1_name] -= c2_c2_count
+            
 
-    def set_delta_for(self, cluster, other_cluster):
-        merged_node_weight = self.calc_merged_node_weight(cluster, other_cluster)
+    def cluster_words(self, desired_number_of_clusters=1000, m=1000):
+        iterations = 0
+        while self.number_of_clusters > desired_number_of_clusters:
+            iterations += 1
+            maximum_quality   = -1e5
+            cluster_to_merge1 = 0
+            cluster_to_merge2 = 0
 
-        loss = cluster.node_weight + other_cluster.node_weight - cluster.edges[other_cluster.name] - merged_node_weight
-        self.potential_deltas[loss] = (cluster, other_cluster)
+            clusters_to_check = min(m + iterations, self.number_of_tokens)
+            for cluster in range(0, clusters_to_check):
+                for other_cluster in range(0, clusters_to_check):
+                    if cluster != other_cluster and cluster in self.clusters and other_cluster in self.clusters:
+                        tmp = self.merge(cluster, other_cluster, limit=clusters_to_check)
+                        quality = self.calculate_quality(clusters_to_check)
+                        self.tmp_break(cluster, other_cluster, tmp)
 
-    def get_max_delta(self):
-        losses  = sorted(self.potential_deltas.keys())
-        max_key = losses[-1]
+                        if quality > maximum_quality:
+                            cluster_to_merge1 = cluster
+                            cluster_to_merge2 = other_cluster
+                            maximum_quality   = quality
 
-        return self.potential_deltas[max_key]
+            self.merge(cluster_to_merge1, cluster_to_merge2, limit=clusters_to_check, permanent=True)
+            self.number_of_clusters -= 1
+            print self.clusters
 
-    def calc_merged_node_weight(self, clusterA, clusterB):
-        adjacent_clusters = set(clusterA.edges.keys() + clusterB.edges.keys())
-        merged_node_weight = 0
-
-        for other_cluster in adjacent_clusters:
-            transition_propability_other_to_merged = self.cluster_transition_propabilities[other_cluster][clusterA.name] \
-                                                     + self.cluster_transition_propabilities[other_cluster][clusterB.name]
-            transition_propability_merged_to_other = self.cluster_transition_propabilities[clusterA.name][other_cluster] \
-                                                     + self.cluster_transition_propabilities[clusterB.name][other_cluster]
-            other_propabilities = self.cluster_propabilities[other_cluster] \
-                                  * (self.cluster_propabilities[clusterA.name] + self.cluster_propabilities[clusterB.name])
-            quality_other_to_merged = 0
-            if transition_propability_other_to_merged > 0:
-                quality_other_to_merged = transition_propability_other_to_merged \
-                                          * math.log(transition_propability_other_to_merged / other_propabilities)
-            quality_merged_to_other = 0
-            if transition_propability_merged_to_other > 0:
-                quality_merged_to_other = transition_propability_merged_to_other \
-                                          * math.log(transition_propability_merged_to_other / other_propabilities)
-            merged_node_weight += quality_other_to_merged + quality_merged_to_other
-
-        return merged_node_weight
-
-    def main(self):
-        self.set_up_counts()
-        self.build_graph()
-        self.init_deltas()
-
-        i = 5
-        while i > 2:
-            c1, c2 = self.get_max_delta()
-
-            merged_cluster = Cluster(name=len(self.clusters), words=c1.words + c2.words)
-            for word in c1.words:
-                self.clusters_by_word[word] = merged_cluster
-            for word in c2.words:
-                self.clusters_by_word[word] = merged_cluster
-
-            self.clusters.remove(c1)
-            self.clusters.remove(c2)
-            self.clusters.append(merged_cluster)
-
-            self.update_propabilities()
-            for cluster in self.clusters:
-                for other_cluster in self.clusters:
-                    if other_cluster > cluster and cluster != c1 and cluster != c2:
-                        print cluster.name, other_cluster.name
-            i -= 1
-
-class Cluster():
-    def __init__(self, name, words):
-        self.name        = name # int
-        self.words       = words # list
-        self.edges       = defaultdict(float) # cluster : weight
-        self.node_weight = 0.0
-
-    def calc_node_weight(self):
-        for edge_weight in self.edges.itervalues():
-            self.node_weight += edge_weight
-
-BrownCluster()
+bc = BrownCluster()
+bc.cluster_words(desired_number_of_clusters=20, m=1000)
+print bc.clusters
