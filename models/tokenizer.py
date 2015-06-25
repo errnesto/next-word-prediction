@@ -16,6 +16,9 @@ class Tokenizer():
             ],
             "prosa": [
                 "briefe_an_eine_freundin.txt"
+            ],
+            "wants": [
+                "nouns.txt"
             ]
         }
         

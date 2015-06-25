@@ -18,16 +18,21 @@ class WordPredictor():
 
     self.build_categories()
 
-  def getWordList(self, prev_word="<S/>"):
+  def getWordList(self, prev_word=None):
+    if prev_word == None:
+      prev_word = "<S/>"
+
+    word_list = []
     if prev_word in self.class_of_words:
       word_probs = self.calc_probabilities(prev_word)
       word_list  = sorted(word_probs, key=word_probs.get, reverse=True)
       # dont predict internal symbols
       word_list  = filter(lambda word: word not in self.exclude, word_list)
       word_list  = word_list[:MAX_PREDICTED_WORDS]
-    else:
+
+    if len(word_list) < 5:
       # in case of unkown word just show most frequent
-      word_list = self.most_frequent
+      word_list += self.most_frequent
 
     return word_list
 
@@ -55,10 +60,10 @@ class WordPredictor():
     self.build_languge_model_from_dir(category)
 
   def build_categories(self):
-    categories = os.listdir(self.src_file_path)
-    categories = filter(lambda word: word != ".DS_Store", categories)
-    print sys.getfilesystemencoding()
-    categories = map(lambda word: unicodedata.normalize("NFC", word.decode("utf-8")), categories)
+    categories      = os.listdir(self.src_file_path)
+    categories      = filter(lambda word: word != ".DS_Store", categories)
+    encoding        = sys.getfilesystemencoding()
+    categories      = map(lambda word: unicodedata.normalize("NFC", word.decode(encoding)), categories)
     self.categories = categories
 
   def build_languge_model_from_dir(self, directory):

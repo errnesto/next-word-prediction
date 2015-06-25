@@ -35,15 +35,16 @@ class Root(BoxLayout):
     words_widget.build_list(word_list)
 
   def word_deleted(self, words_widget):
-    words = self.text_output.text.split()
-    words.pop()
-    self.text_output.text = ' '.join(words)
+    prev_words = self.text_output.text.split()
+    if len(prev_words) <= 0:
+      return
+      
+    prev_words.pop()
+    self.text_output.text = ' '.join(prev_words)
 
-    if len(words) > 0:
-      word_list = self.word_predictor.getWordList(words[-1])
-    else:
-      word_list = self.word_predictor.getWordList()
-    words_widget.build_list(word_list)
+    prev_word  = prev_words[-1] if len(prev_words) > 0 else None
+    words      = self.word_predictor.getWordList(prev_word)
+    words_widget.build_list(words)
 
   def show_cathegory_list(self, words_widget = None):
     if words_widget:
@@ -64,7 +65,9 @@ class Root(BoxLayout):
     self.remove_widget(cathegory_widget)
 
     #build initial list
-    words = self.word_predictor.getWordList()
+    prev_words = self.text_output.text.split()
+    prev_word  = prev_words[-1] if len(prev_words) > 0 else None
+    words      = self.word_predictor.getWordList(prev_word)
 
     words_widget = WordList()
     words_widget.build_list(words)
