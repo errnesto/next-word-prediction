@@ -2,7 +2,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.properties    import ObjectProperty
 from kivy.lang          import Builder
 
-from models.WordPredictor          import WordPredictor
+from models.wordPredictor          import WordPredictor
 from viewComponents.WordList       import WordList
 from viewComponents.CathegoryList  import CathegoryList
 Builder.load_file('viewComponents/Root.kv')
@@ -31,20 +31,27 @@ class Root(BoxLayout):
     self.text_output.text = self.text_output.text + ' ' + word
 
     #generate next word list
-    words = self.word_predictor.getWordList()
-    words_widget.build_list(words)
+    word_list = self.word_predictor.getWordList(word)
+    words_widget.build_list(word_list)
 
   def word_deleted(self, words_widget):
-    words = self.text_output.text.split(' ')
+    words = self.text_output.text.split()
     words.pop()
     self.text_output.text = ' '.join(words)
+
+    if len(words) > 0:
+      word_list = self.word_predictor.getWordList(words[-1])
+    else:
+      word_list = self.word_predictor.getWordList()
+    words_widget.build_list(word_list)
 
   def show_cathegory_list(self, words_widget = None):
     if words_widget:
       self.remove_widget(words_widget)
 
+    cathegories = self.word_predictor.categories
     cathegory_widget = CathegoryList()
-    cathegory_widget.build_list(['A', 'B', 'C'])
+    cathegory_widget.build_list(cathegories)
 
     #listen to cathegory list
     cathegory_widget.bind(on_cathegory_button_selected = self.show_word_list)
@@ -52,7 +59,8 @@ class Root(BoxLayout):
     self.add_widget(cathegory_widget)
     self.current_list = cathegory_widget
 
-  def show_word_list(self, cathegory_widget, cathegory_button):
+  def show_word_list(self, cathegory_widget, category):
+    self.word_predictor.go_to_categorie(category)
     self.remove_widget(cathegory_widget)
 
     #build initial list
