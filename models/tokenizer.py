@@ -40,25 +40,25 @@ class Tokenizer():
             content = f.read()
             f.close()
 
-            # strip special characters. Note that "." is not removed yet
-            content = re.sub(ur'[\]\[!"“„#$%&\\\'()*+,\/:;<=>?@\^_\-–»«]', "", content).lower()
+            # strip special characters. Note that ".", "?" and "!" are not removed yet
+            content = re.sub(ur'[\]\["“„#$%&\\\'()*+,\/:;<=>@\^_\-–»«]', "", content)
 
             # common abbreviations 
             # from http://www.sekretaerinnen-service.de/newsletterarticle.asp?his=17.42.55.3798&id=6255 (25.06.2015)
             # just treat them all as the same word
-            content = re.sub(ur"abs\.|abschn\.|abt\.|a\. d\.|adr\.|allg\.|anh\.|anm\.|ao\.|a\. o\.|art\.|bd\.|bez\.|bzw\.|dgl\.|d\. h\.|d\. j\.|d\. m\.|dz\.|ev\.|röm-kath\.|evtl\.|f\.|ff\.|gem\.|h\. c\.|i\. allg\.|i\. r\.|jg\.|Jgg\.|lfd\.|kap\.|nr\.|o\. ä\.|p\. a\.|pp\.|ppa\.|prov\.|tfxu\.|a\.|u\. a\.|u\. a\. m\.|u\. ä\.|u\. d\. ä\.|u\. dgl\.|usf\.|usw\.|z\. t\.|zz\.", " <abbrevation> ", content)
+            content = re.sub(ur"Abs\.|Abschn\.|Abt\.|a\. d\.|Adr\.|allg\.|Anh\.|Anm\.|ao\.|a\. o\.|Art\.|Bd\.|Bez\.|bez\.|bzw\.|dgl\.|d\. h\.|d\. j\.|d\. M\.|dz\.|ev\.|röm-kath\.|evtl\.|f\.|ff\.|gem\.|h\. c\.|i\. allg\.|i\. r\.|Jg\.|Jgg\.|lfd\.|Kap\.|Nr\.|o\. Ä\.|p\. A\.|pp\.|ppa\.|prov\.|tfxu\.|a\.|u\. a\.|u\. A\.|u\. a\. m\.|u\. Ä\.|u\. d\. Ä\.|u\. dgl\.|usf\.|usw\.|z\. t\.|zz\.|z\. B\.", " <abbrevation> ", content)
 
             # find boundaries of sentences
-            content = re.sub(ur"([a-z])\.\s([A-Z0-9])", r"\1 <S/> \2", content)
-            content = re.sub(ur"\.$", " <S/> ", content, flags=re.MULTILINE)
+            content = re.sub(ur"([a-z])[\.\?!]\s([A-Z0-9])", r"\1 <S/> \2", content)
+            content = re.sub(ur"[\.\?!]$", " <S/> ", content, flags=re.MULTILINE)
 
-            # now remove dots
-            content = re.sub(ur"\.", " ", content)
+            # now remove dots etc.
+            content = re.sub(ur"[\.\?!]", " ", content)
 
             # replace numbers with <number>
             content = re.sub(ur"\d+", " <number> ", content)
             
-            words = content.split()
+            words = content.lower().split()
             # replace one letter word with <unkown>
             for i, word in enumerate(words):
                 if len(word) <= 1:
