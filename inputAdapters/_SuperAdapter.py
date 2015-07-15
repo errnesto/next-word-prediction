@@ -18,6 +18,10 @@ class SuperAdapter(EventDispatcher):
 
         Optional Signals are:
             'close'
+            'del'
+            'talk'
+            'up'
+            'down'
         '''
 
     def __init__(self, **kwargs):

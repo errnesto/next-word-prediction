@@ -1,5 +1,5 @@
-from viewComponents.List           import List
-from viewComponents.StandardButton import StandardButton
+from viewComponents.list           import List
+from viewComponents.standardButton import StandardButton
 
 class CathegoryList(List):
 

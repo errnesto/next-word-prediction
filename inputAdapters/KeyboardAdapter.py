@@ -26,6 +26,14 @@ class KeyboardAdapter(SuperAdapter):
             self.dispatch('on_signal', 'enter')
 
         #these are convenience signals which are not required
+        elif keycode[1] == 'up':
+            self.dispatch('on_signal', 'up')
+        elif keycode[1] == 'down':
+            self.dispatch('on_signal', 'down')
+        elif keycode[1] == 'backspace':
+            self.dispatch('on_signal', 'del')
+        elif keycode[1] == 'spacebar':
+            self.dispatch('on_signal', 'talk')
         elif modifiers and modifiers[0] == 'meta' and keycode[1] == 'q':
             self.dispatch('on_signal', 'close')
 

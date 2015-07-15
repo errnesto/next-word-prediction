@@ -1,3 +1,4 @@
+# coding=utf-8
 import pytest
 from tools import simulate
 
@@ -15,14 +16,14 @@ def test_if_can_select_cathegories(simulator):
     simulator.tap('//Root//CathegoryList//StandardButton[1]')
     simulator.assert_count('//Root//WordList', 1)
     simulator.assert_count_min('//Root//WordList//StandardButton', 1)
-    simulator.assert_count('//Root//BackButton', 2)
+    simulator.assert_count('//Root//ActButton', 3)
 
 @pytest.mark.parametrize('params', [{}])
 @simulate
 def test_back_button(simulator):
     simulator.tap('//Root//CathegoryList//StandardButton[1]')
     simulator.assert_count('//Root//WordList', 1)
-    simulator.tap('//Root//WordList//BackButton//Button[@text="BACK"]')
+    simulator.tap('//Root//WordList//ActButton//Button[@text="Menu"]')
     simulator.assert_count('//Root//CathegoryList', 1)
 
 @pytest.mark.parametrize('params', [{}])
@@ -47,7 +48,7 @@ def test_delete_button(simulator):
     def cb(button):
         simulator.tap(button_selector)
         simulator.tap(button_selector) # same selector but now this is a different button
-        simulator.tap('//Root//WordList//BackButton//Button[@text="DEL"]')
+        simulator.tap(u'//Root//WordList//ActButton//Button[@text="löschen"]')
         simulator.assert_text('//Root//Label', button.text)
         
     simulator.get_node(button_selector, cb)

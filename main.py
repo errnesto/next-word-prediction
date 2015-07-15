@@ -1,5 +1,5 @@
 from kivy.app            import App
-from viewComponents.Root import Root
+from viewComponents.root import Root
 
 import inputAdapters # see __init__.py how this is initialized 
 
