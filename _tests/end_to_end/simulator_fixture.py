@@ -11,12 +11,12 @@ sys.path.append(lib_path)
 
 @pytest.fixture
 def simulator(request):
-    from main import MainApp
-    application = MainApp()
-    simulator = Simulator(application)
+        from main import MainApp
+        application = MainApp()
+        simulator = Simulator(application)
 
-    def fin():
-        simulator.clean_queue()
+        def fin():
+                simulator.clean_queue()
 
-    request.addfinalizer(fin)
-    return simulator
+        request.addfinalizer(fin)
+        return simulator

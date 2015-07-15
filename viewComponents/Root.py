@@ -8,74 +8,74 @@ from viewComponents.CathegoryList  import CathegoryList
 Builder.load_file('viewComponents/Root.kv')
 
 class Root(BoxLayout):
-  word_predictor = WordPredictor()
-  current_list   = None
-  text_output    = ObjectProperty(None)
+    word_predictor = WordPredictor()
+    current_list   = None
+    text_output    = ObjectProperty(None)
 
-  def __init__(self, **kwargs):
-    super(Root, self).__init__(**kwargs)
+    def __init__(self, **kwargs):
+        super(Root, self).__init__(**kwargs)
 
-    self.show_cathegory_list()
+        self.show_cathegory_list()
 
-  # this should easily be pluggable with any kind of input device
-  # one should be able to expose the whole functionality of the app with the 3 signals "left" "right" and "enter"
-  def signal_handler(self, signal):
-    if signal == 'left':
-      self.current_list.move_highlight('left')
-    elif signal == 'right':
-      self.current_list.move_highlight('right')
-    elif signal == 'enter':
-      self.current_list.select_current()
+    # this should easily be pluggable with any kind of input device
+    # one should be able to expose the whole functionality of the app with the 3 signals "left" "right" and "enter"
+    def signal_handler(self, signal):
+        if signal == 'left':
+            self.current_list.move_highlight('left')
+        elif signal == 'right':
+            self.current_list.move_highlight('right')
+        elif signal == 'enter':
+            self.current_list.select_current()
 
-  def word_selected(self, words_widget, word):
-    self.text_output.text = self.text_output.text + ' ' + word
+    def word_selected(self, words_widget, word):
+        self.text_output.text = self.text_output.text + ' ' + word
 
-    #generate next word list
-    word_list = self.word_predictor.getWordList(word)
-    words_widget.build_list(word_list)
+        #generate next word list
+        word_list = self.word_predictor.getWordList(word)
+        words_widget.build_list(word_list)
 
-  def word_deleted(self, words_widget):
-    prev_words = self.text_output.text.split()
-    if len(prev_words) <= 0:
-      return
-      
-    prev_words.pop()
-    self.text_output.text = ' '.join(prev_words)
+    def word_deleted(self, words_widget):
+        prev_words = self.text_output.text.split()
+        if len(prev_words) <= 0:
+            return
+            
+        prev_words.pop()
+        self.text_output.text = ' '.join(prev_words)
 
-    prev_word  = prev_words[-1] if len(prev_words) > 0 else None
-    words      = self.word_predictor.getWordList(prev_word)
-    words_widget.build_list(words)
+        prev_word  = prev_words[-1] if len(prev_words) > 0 else None
+        words      = self.word_predictor.getWordList(prev_word)
+        words_widget.build_list(words)
 
-  def show_cathegory_list(self, words_widget = None):
-    if words_widget:
-      self.remove_widget(words_widget)
+    def show_cathegory_list(self, words_widget = None):
+        if words_widget:
+            self.remove_widget(words_widget)
 
-    cathegories = self.word_predictor.categories
-    cathegory_widget = CathegoryList()
-    cathegory_widget.build_list(cathegories)
+        cathegories = self.word_predictor.categories
+        cathegory_widget = CathegoryList()
+        cathegory_widget.build_list(cathegories)
 
-    #listen to cathegory list
-    cathegory_widget.bind(on_cathegory_button_selected = self.show_word_list)
+        #listen to cathegory list
+        cathegory_widget.bind(on_cathegory_button_selected = self.show_word_list)
 
-    self.add_widget(cathegory_widget)
-    self.current_list = cathegory_widget
+        self.add_widget(cathegory_widget)
+        self.current_list = cathegory_widget
 
-  def show_word_list(self, cathegory_widget, category):
-    self.word_predictor.go_to_categorie(category)
-    self.remove_widget(cathegory_widget)
+    def show_word_list(self, cathegory_widget, category):
+        self.word_predictor.go_to_categorie(category)
+        self.remove_widget(cathegory_widget)
 
-    #build initial list
-    prev_words = self.text_output.text.split()
-    prev_word  = prev_words[-1] if len(prev_words) > 0 else None
-    words      = self.word_predictor.getWordList(prev_word)
+        #build initial list
+        prev_words = self.text_output.text.split()
+        prev_word  = prev_words[-1] if len(prev_words) > 0 else None
+        words      = self.word_predictor.getWordList(prev_word)
 
-    words_widget = WordList()
-    words_widget.build_list(words)
+        words_widget = WordList()
+        words_widget.build_list(words)
 
-    #listen to word list
-    words_widget.bind(on_word_button_selected   = self.word_selected)
-    words_widget.bind(on_delete_button_selected = self.word_deleted)
-    words_widget.bind(on_back_button_selected   = self.show_cathegory_list)
+        #listen to word list
+        words_widget.bind(on_word_button_selected   = self.word_selected)
+        words_widget.bind(on_delete_button_selected = self.word_deleted)
+        words_widget.bind(on_back_button_selected   = self.show_cathegory_list)
 
-    self.add_widget(words_widget)
-    self.current_list = words_widget
+        self.add_widget(words_widget)
+        self.current_list = words_widget
