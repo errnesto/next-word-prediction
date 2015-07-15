@@ -1,6 +1,8 @@
+# coding=utf-8
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties    import ObjectProperty
 from kivy.lang          import Builder
+from plyer import tts
 
 from models.wordPredictor          import WordPredictor
 from viewComponents.wordList       import WordList
@@ -11,6 +13,7 @@ class Root(BoxLayout):
     word_predictor = WordPredictor()
     current_list   = None
     text_output    = ObjectProperty(None)
+    # talker         = pyttsx.init()
 
     def __init__(self, **kwargs):
         super(Root, self).__init__(**kwargs)
@@ -30,9 +33,10 @@ class Root(BoxLayout):
             self.talk(self.current_list)
 
     def talk(self, words_widget):
-        # just empty out selected wors
-        # no real talker integrated
-
+        try:
+            tts.speak(self.text_output.text.encode("utf8") + ".")
+        except NotImplementedError:
+            pass
         self.text_output.text = ""
 
         if words_widget.__class__.__name__ == "WordList":
