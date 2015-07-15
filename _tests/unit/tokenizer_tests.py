@@ -4,13 +4,12 @@ import pytest, os, sys
 lib_path = os.path.abspath(os.path.join('..', 'next-word-predictor'))
 sys.path.append(lib_path)
 
-test = True
 from models.tokenizer import Tokenizer
 
 @pytest.fixture
 def tokenizer():
-        tokenizer = Tokenizer()
-        return tokenizer
+    tokenizer = Tokenizer()
+    return tokenizer
 
 def test_strip_special_characters(tokenizer):
     test_str0 = u"[s1]s2“s3„s4#s5$s6%s7&s8\s9's10"

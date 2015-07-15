@@ -75,7 +75,7 @@ class WordPredictor():
             word_count = int(data[2])
 
             self.class_of_words[word] = class_id
-            total_word_counts[word]  += word_count
+            total_word_counts[word]   = word_count
 
         # store most frequnt words as fallback
         most_frequent = sorted(total_word_counts, key=total_word_counts.get, reverse=True)
