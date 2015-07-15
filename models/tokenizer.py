@@ -21,6 +21,37 @@ class Tokenizer():
                 "nouns.txt"
             ]
         }
+
+    def strip_special_characters(self, string):
+        # strip special characters. Note that ".", "?" and "!" are not removed yet
+        return re.sub(ur'[\]\["“„#$%&\\\'()*+,\/:;€<=>@\^_\-–»«]', " ", string)
+
+    def replace_abbreviations(self, string):
+        # common abbreviations 
+        # from http://www.sekretaerinnen-service.de/newsletterarticle.asp?his=17.42.55.3798&id=6255 (25.06.2015)
+        # just treat them all as the same word
+        return re.sub(ur"Abs\.|Abschn\.|Abt\.|a\. d\.|Adr\.|allg\.|Anh\.|Anm\.|ao\.|a\. o\.|Art\.|Bd\.|Bez\.|bez\.|bzw\.|dgl\.|d\. h\.|d\. j\.|d\. M\.|dz\.|ev\.|röm-kath\.|evtl\.|f\.|ff\.|gem\.|h\. c\.|i\. allg\.|i\. r\.|Jg\.|Jgg\.|lfd\.|Kap\.|Nr\.|o\. Ä\.|p\. A\.|pp\.|ppa\.|prov\.|tfxu\.|a\.|u\. a\. m\.|u\. a\.|u\. A\.|u\. Ä\.|u\. d\. Ä\.|u\. dgl\.|usf\.|usw\.|z\. t\.|zz\.|z\. B\.", " <abbrevation> ", string)
+
+    def find_sentence_boundaires(self, string):
+        string = re.sub(ur"([a-z0-9<abbrevation>])[\.\?!]\s([A-Z0-9<abbrevation>])", r"\1 <S/> \2", string)
+        string = re.sub(ur"[\.\?!]$", " <S/> ", string, flags=re.MULTILINE)
+        # now remove dots etc.
+        return re.sub(ur"[\.\?!]", " ", string)
+
+    def replace_numbers(self, string):
+        return re.sub(ur"\d+", " <number> ", string)
+
+    def replace_unkown(self, string):
+        res = ""
+        words = string.split()
+        # replace one letter word with <unkown>
+        for i, word in enumerate(words):
+            if len(word) <= 1:
+                words[i] = " <unkown> "
+
+        res += " ".join(words)
+        return res
+
         
     def parse_files(self, cathegory, filenames):
         """loops through the given file paths and creates a clean tokeniced file from them
@@ -40,33 +71,15 @@ class Tokenizer():
             content = f.read()
             f.close()
 
-            # strip special characters. Note that ".", "?" and "!" are not removed yet
-            content = re.sub(ur'[\]\["“„#$%&\\\'()*+,\/:;<=>@\^_\-–»«]', "", content)
+            content = self.strip_special_characters(content)
+            content = self.replace_abbreviations(content)
+            content = self.find_sentence_boundaires(content)
+            content = self.find_sentence_boundaires(content)
+            content = self.replace_numbers(content)
+            content = self.replace_unkown(content)
 
-            # common abbreviations 
-            # from http://www.sekretaerinnen-service.de/newsletterarticle.asp?his=17.42.55.3798&id=6255 (25.06.2015)
-            # just treat them all as the same word
-            content = re.sub(ur"Abs\.|Abschn\.|Abt\.|a\. d\.|Adr\.|allg\.|Anh\.|Anm\.|ao\.|a\. o\.|Art\.|Bd\.|Bez\.|bez\.|bzw\.|dgl\.|d\. h\.|d\. j\.|d\. M\.|dz\.|ev\.|röm-kath\.|evtl\.|f\.|ff\.|gem\.|h\. c\.|i\. allg\.|i\. r\.|Jg\.|Jgg\.|lfd\.|Kap\.|Nr\.|o\. Ä\.|p\. A\.|pp\.|ppa\.|prov\.|tfxu\.|a\.|u\. a\.|u\. A\.|u\. a\. m\.|u\. Ä\.|u\. d\. Ä\.|u\. dgl\.|usf\.|usw\.|z\. t\.|zz\.|z\. B\.", " <abbrevation> ", content)
+            res = content.lower()
 
-            # find boundaries of sentences
-            content = re.sub(ur"([a-z])[\.\?!]\s([A-Z0-9])", r"\1 <S/> \2", content)
-            content = re.sub(ur"[\.\?!]$", " <S/> ", content, flags=re.MULTILINE)
-
-            # now remove dots etc.
-            content = re.sub(ur"[\.\?!]", " ", content)
-
-            # replace numbers with <number>
-            content = re.sub(ur"\d+", " <number> ", content)
-            
-            words = content.lower().split()
-            # replace one letter word with <unkown>
-            for i, word in enumerate(words):
-                if len(word) <= 1:
-                    words[i] = " <unkown> "
-
-            res += " ".join(words)
-
-        print cathegory + ":", len(res), "words"
         token_filepath = path.join(self.dest_file_path, cathegory + ".txt")
         token_file = codecs.open(token_filepath, mode="w", encoding="utf-8")
         token_file.write(res)
@@ -77,5 +90,8 @@ class Tokenizer():
             files = self.cathegories[cathegory_name]
             self.parse_files(cathegory=cathegory_name, filenames=files)
 
-t = Tokenizer()
-t.tokenize()
+# If the script is called directly, run it.
+print __name__
+if __name__ == '__main__':
+    t = Tokenizer()
+    t.tokenize()
