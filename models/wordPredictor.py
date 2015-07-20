@@ -36,7 +36,7 @@ class WordPredictor():
             word_list  = filter(lambda word: word not in self.exclude, word_list)
             word_list  = word_list[:MAX_PREDICTED_WORDS]
 
-        if len(word_list) < 5:
+        if len(word_list) <= 0:
             # in case of unkown word just show most frequent
             word_list += self.most_frequent
 
