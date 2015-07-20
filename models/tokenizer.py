@@ -91,7 +91,6 @@ class Tokenizer():
             self.parse_files(cathegory=cathegory_name, filenames=files)
 
 # If the script is called directly, run it.
-print __name__
 if __name__ == '__main__':
     t = Tokenizer()
     t.tokenize()

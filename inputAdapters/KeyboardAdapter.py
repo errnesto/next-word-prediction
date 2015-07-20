@@ -1,4 +1,4 @@
-'''Keyboard Adapter using kivy'''
+"""Keyboard Adapter using kivy"""
 
 from _SuperAdapter import SuperAdapter
 from kivy.core.window import Window
@@ -18,24 +18,24 @@ class KeyboardAdapter(SuperAdapter):
 
     def signal_dispatcher(self, keyboard, keycode, text, modifiers):
         # required signals are: 'left' 'right' and 'enter'
-        if keycode[1] == 'left':
-            self.dispatch('on_signal', 'left')
-        elif keycode[1] == 'right':
-            self.dispatch('on_signal', 'right')
-        elif keycode[1] == 'enter':
-            self.dispatch('on_signal', 'enter')
+        if keycode[1] == "left":
+            self.dispatch("on_signal", "left")
+        elif keycode[1] == "right":
+            self.dispatch("on_signal", "right")
+        elif keycode[1] == "enter":
+            self.dispatch("on_signal", "enter")
 
         #these are convenience signals which are not required
-        elif keycode[1] == 'up':
-            self.dispatch('on_signal', 'up')
-        elif keycode[1] == 'down':
-            self.dispatch('on_signal', 'down')
-        elif keycode[1] == 'backspace':
-            self.dispatch('on_signal', 'del')
-        elif keycode[1] == 'spacebar':
-            self.dispatch('on_signal', 'talk')
-        elif modifiers and modifiers[0] == 'meta' and keycode[1] == 'q':
-            self.dispatch('on_signal', 'close')
+        elif keycode[1] == "up":
+            self.dispatch("on_signal", "up")
+        elif keycode[1] == "down":
+            self.dispatch("on_signal", "down")
+        elif keycode[1] == "backspace":
+            self.dispatch("on_signal", "del")
+        elif keycode[1] == "spacebar":
+            self.dispatch("on_signal", "talk")
+        elif modifiers and modifiers[0] == "meta" and keycode[1] == "q":
+            self.dispatch("on_signal", "close")
 
     @staticmethod
     def is_available():

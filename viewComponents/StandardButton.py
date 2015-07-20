@@ -1,6 +1,6 @@
 from kivy.uix.button import Button
 from kivy.lang import Builder
-Builder.load_file('viewComponents/standardButton.kv')
+Builder.load_file("viewComponents/standardButton.kv")
 
 class StandardButton(Button):
     

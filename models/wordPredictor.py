@@ -8,6 +8,8 @@ from collections import defaultdict
 MAX_PREDICTED_WORDS = 30
 
 class WordPredictor():
+    """loads a language model and can predict words based on a word list"""
+
     def __init__(self):
         self.src_file_path = os.path.join(os.path.dirname(__file__), "../data/categories/")
         self.exclude       = ["<S/>", "<number>", "<abbrevation>", "<unkown>"]
@@ -19,6 +21,10 @@ class WordPredictor():
         self.build_categories()
 
     def getWordList(self, prev_word=None):
+        """returns a list of words based on a previous one
+
+           if no previous word is provided predict first word in sentence
+        """
         if prev_word == None:
             prev_word = "<S/>"
 
@@ -56,6 +62,8 @@ class WordPredictor():
         self.build_languge_model_from_dir(category)
 
     def build_categories(self):
+        """returns list of avilible categoeires"""
+        
         categories      = os.listdir(self.src_file_path)
         categories      = filter(lambda word: word != ".DS_Store", categories)
         encoding        = sys.getfilesystemencoding()

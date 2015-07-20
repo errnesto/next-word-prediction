@@ -7,7 +7,7 @@ from plyer import tts
 from models.wordPredictor          import WordPredictor
 from viewComponents.wordList       import WordList
 from viewComponents.cathegoryList  import CathegoryList
-Builder.load_file('viewComponents/root.kv')
+Builder.load_file("viewComponents/root.kv")
 
 class Root(BoxLayout):
     word_predictor = WordPredictor()
@@ -20,16 +20,22 @@ class Root(BoxLayout):
 
         self.show_cathegory_list()
 
-    # this should easily be pluggable with any kind of input device
-    # one should be able to expose the whole functionality of the app with the 3 signals "left" "right" and "enter"
     def signal_handler(self, signal):
+        """hanlde signal to navigate throug app
+
+           one is able to get the whole functionality of the app with the 3 signals:
+           "left" 
+           "right" and 
+           "enter"
+        """
+
         if signal in ["left", "right", "up", "down"]:
             self.current_list.move_highlight(signal)
-        elif signal == 'enter':
+        elif signal == "enter":
             self.current_list.select_current()
-        elif signal == 'del':
+        elif signal == "del":
             self.word_deleted(self.current_list)
-        elif signal == 'talk':
+        elif signal == "talk":
             self.talk(self.current_list)
 
     def talk(self, words_widget):
@@ -37,8 +43,10 @@ class Root(BoxLayout):
             tts.speak(self.text_output.text.encode("utf8") + ".")
         except NotImplementedError:
             pass
+
         self.text_output.text = ""
 
+        # update word list if it not in other view
         if words_widget.__class__.__name__ == "WordList":
             words      = self.word_predictor.getWordList()
             words_widget.build_list(words)
@@ -58,6 +66,7 @@ class Root(BoxLayout):
         prev_words.pop()
         self.text_output.text = " ".join(prev_words)
 
+        # update word list if it not in other view
         if words_widget.__class__.__name__ == "WordList":
             prev_word  = prev_words[-1] if len(prev_words) > 0 else None
             words      = self.word_predictor.getWordList(prev_word)

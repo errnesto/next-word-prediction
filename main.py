@@ -1,7 +1,7 @@
 from kivy.app            import App
 from viewComponents.root import Root
 
-import inputAdapters # see __init__.py how this is initialized 
+import inputAdapters # see __init__.py of inputAdapters how this is initialized 
 
 class MainApp(App):
 
@@ -20,10 +20,10 @@ class MainApp(App):
 
     def signal_handler(self, signal_adapter, signal):
         # either handle signal here or pass it down to root object
-        if signal == 'close':
+        if signal == "close":
             self.stop()
         else:
             self.root.signal_handler(signal)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     MainApp().run()

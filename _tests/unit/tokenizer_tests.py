@@ -1,7 +1,7 @@
 # coding=utf-8
 import pytest, os, sys
 
-lib_path = os.path.abspath(os.path.join('..', 'next-word-predictor'))
+lib_path = os.path.abspath(os.path.join("..", "next-word-predictor"))
 sys.path.append(lib_path)
 
 from models.tokenizer import Tokenizer

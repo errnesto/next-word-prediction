@@ -65,9 +65,9 @@ class Simulator(object):
         Logger.info("Simulation: Press %s" % selector)
         self.rebuild_tree()
 
-        self.trigger_event('on_press', selector)
+        self.trigger_event("on_press", selector)
         if release:
-            self.trigger_event('on_release', selector)
+            self.trigger_event("on_release", selector)
 
     def tap(self, selector):
         self.press(selector, release=True)
@@ -96,8 +96,8 @@ class Simulator(object):
 
         function(self, *args, **kwargs)
 
-        if function.__name__ == 'wait':
-            delay = kwargs.get('seconds', args[0])
+        if function.__name__ == "wait":
+            delay = kwargs.get("seconds", args[0])
         else:
             delay = self.EXECUTE_STEP_DELAY
         Clock.schedule_once(partial(self._execute_step, index + 1), delay)
@@ -114,7 +114,7 @@ class Simulator(object):
     def node_to_widget(self, node):
         if isinstance(node, list) and len(node) == 1:
             node = node[0]
-        widget = self.collected_widgets[int(node.get('__element_id'))]
+        widget = self.collected_widgets[int(node.get("__element_id"))]
         return widget
 
     @execution_step
@@ -175,4 +175,4 @@ class Simulator(object):
 
     def assert_text(self, selector, value):
         Logger.info("Simulation: assert %s has text %s" % (selector, value))
-        self.assert_attr(selector, 'text', value)
+        self.assert_attr(selector, "text", value)

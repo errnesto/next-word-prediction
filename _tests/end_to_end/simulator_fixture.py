@@ -5,7 +5,7 @@ import pytest
 
 from simulation import Simulator
 
-lib_path = os.path.abspath(os.path.join('..', 'next-word-predictor'))
+lib_path = os.path.abspath(os.path.join("..", "next-word-predictor"))
 sys.path.append(lib_path)
 
 
